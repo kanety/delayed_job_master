@@ -1,14 +1,20 @@
+# working directory
+working_directory Dir.pwd
+
+# preload application
+preload_app true
+
 # monitor wait time in second
-monitor_wait 1
+monitor_wait 5
+
+# path to pid file
+pid_file "#{Dir.pwd}/tmp/pids/delayed_job_master.pid"
 
 # path to log file
 log_file "#{Dir.pwd}/log/delayed_job_master.log"
 
 # log level
 log_level :info
-
-# path to pid file
-pid_file "#{Dir.pwd}/tmp/pids/delayed_job_master.pid"
 
 # worker1
 add_worker do |worker|
@@ -33,9 +39,9 @@ add_worker do |worker|
 end
 
 before_fork do |master, worker_info|
-  Delayed::Worker.before_fork
+  Delayed::Worker.before_fork if defined?(Delayed::Worker)
 end
 
 after_fork do |master, worker_info|
-  Delayed::Worker.after_fork
+  Delayed::Worker.after_fork if defined?(Delayed::Worker)
 end

@@ -6,7 +6,7 @@ class Delayed::Plugins::WorkerMemoryChecker < Delayed::Plugin
       next unless worker.max_memory
       mem = GetProcessMem.new
       if mem.mb > worker.max_memory
-        worker.master_logger.info "shutting down #{Process.pid} because it consumes large memory #{mem.mb.to_i} MB..."
+        worker.master_logger.info "shutting down worker #{Process.pid} because it consumes large memory #{mem.mb.to_i} MB..."
         worker.stop
       end
     end

@@ -2,10 +2,12 @@ describe Delayed::Worker do
   subject(:worker) {
     worker = Delayed::Worker.new(queues: [])
     worker.max_memory = 1
-    worker.master_logger = Logger.new("log/delayed_job_master.log")
+    worker.master_logger = Logger.new(Rails.root.join("log/delayed_job_master.log"))
     worker
   }
-  before { Delayed::Job.delete_all }
+  before {
+    Delayed::Job.delete_all
+  }
 
   def enqueue_job
     [nil].delay.pop

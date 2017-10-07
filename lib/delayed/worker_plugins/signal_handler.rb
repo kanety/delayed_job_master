@@ -12,14 +12,14 @@ class Delayed::Plugins::SignalHandler < Delayed::Plugin
         trap('USR2') do
           Thread.new do
             $0 = "#{$0} [OLD]"
-            master_logger.info "shutting down #{Process.pid}..."
+            master_logger.info "shutting down worker #{Process.pid}..."
             stop
           end
         end
       end
     end
     lifecycle.after(:execute) do |worker|
-      worker.master_logger.info "shut down #{Process.pid}"
+      worker.master_logger.info "shut down worker #{Process.pid}"
     end
   end
 end
