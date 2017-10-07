@@ -223,7 +223,7 @@ module Delayed
 
         @logger.info "worker #{worker_info.pid} seems to be killed, forking new worker..."
         @worker_factory.fork_worker(worker_info)
-        @logger.info "forked: #{worker_info.pid}"
+        @logger.info "forked worker #{worker_info.pid}"
       end
     end
   end
