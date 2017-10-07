@@ -6,7 +6,7 @@ module Delayed
       attr_reader :configs
 
       def initialize(args)
-        @configs = { monitor: true }
+        @configs = {}
 
         OptionParser.new { |opt|
           opt.banner = <<-EOS
