@@ -45,16 +45,16 @@ working_directory Dir.pwd
 preload_app true
 
 # monitor wait time in second
-monitor_wait 1
+monitor_wait 5
+
+# path to pid file
+pid_file "#{Dir.pwd}/tmp/pids/delayed_job_master.pid"
 
 # path to log file
 log_file "#{Dir.pwd}/log/delayed_job_master.log"
 
 # log level
 log_level :info
-
-# path to pid file
-pid_file "#{Dir.pwd}/tmp/pids/delayed_job_master.pid"
 
 # worker1
 add_worker do |worker|
