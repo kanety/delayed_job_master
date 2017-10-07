@@ -1,14 +1,22 @@
+app_root = defined?(Rails) ? Rails.root : Dir.pwd
+
+# working directory
+working_directory app_root
+
+# preload application
+preload_app true
+
 # monitor wait time in second
 monitor_wait 1
 
+# path to pid file
+pid_file "#{app_root}/tmp/pids/delayed_job_master.pid"
+
 # path to log file
-log_file "#{Dir.pwd}/log/delayed_job_master.log"
+log_file "#{app_root}/log/delayed_job_master.log"
 
 # log level
 log_level :info
-
-# path to pid file
-pid_file "#{Dir.pwd}/tmp/pids/delayed_job_master.pid"
 
 # worker1
 add_worker do |worker|
@@ -33,9 +41,9 @@ add_worker do |worker|
 end
 
 before_fork do |master, worker_info|
-  Delayed::Worker.before_fork
+  Delayed::Worker.before_fork if defined?(Delayed::Worker)
 end
 
 after_fork do |master, worker_info|
-  Delayed::Worker.after_fork
+  Delayed::Worker.after_fork if defined?(Delayed::Worker)
 end

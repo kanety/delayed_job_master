@@ -29,19 +29,6 @@ describe Delayed::Master do
     expect(worker_count).to eq(2)
   end
 
-  it 'traps signals' do
-    thread = start_master_thread(master)
-
-    expect(master).to receive(:exec)
-
-    %w(USR1 USR2 TERM).each do |signal|
-      Process.kill(signal, Process.pid)
-    end
-
-    master.stop
-    thread.join
-  end
-
   it 'restarts a killed worker' do
     thread = start_master_thread(master)
 
@@ -67,5 +54,18 @@ describe Delayed::Master do
     thread.join
     
     $0 = proc_title
+  end
+
+  %w(USR1 USR2 TERM QUIT).each do |signal|
+    it "traps #{signal} signals" do
+      thread = start_master_thread(master)
+
+      expect(master).to receive(:exec) if signal == 'USR2'
+
+      Process.kill(signal, Process.pid)
+
+      master.stop
+      thread.join
+    end
   end
 end

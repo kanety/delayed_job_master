@@ -38,6 +38,12 @@ This command creates `bin/delayed_job_master` and `config/delayed_job_master.rb`
 Edit `config/delayed_job_master.rb`:
 
 ```ruby
+# working directory
+working_directory Dir.pwd
+
+# preload application
+preload_app true
+
 # monitor wait time in second
 monitor_wait 1
 
@@ -73,11 +79,11 @@ add_worker do |worker|
 end
 
 before_fork do |master, worker_info|
-  Delayed::Worker.before_fork
+  Delayed::Worker.before_fork if defined?(Delayed::Worker)
 end
 
 after_fork do |master, worker_info|
-  Delayed::Worker.after_fork
+  Delayed::Worker.after_fork if defined?(Delayed::Worker)
 end
 ```
 
@@ -92,9 +98,13 @@ Command line options:
 * -c, --config: Specify configuration file.
 * -D, --daemon: Start master as a daemon.
 
-Stop master and workers:
+Stop master and workers gracefully:
 
     $ kill -TERM `cat tmp/pids/delayed_job_master.pid`
+
+Stop master and workers forcefully:
+
+    $ kill -QUIT `cat tmp/pids/delayed_job_master.pid`
 
 Reopen log files:
 
@@ -106,9 +116,10 @@ Restart gracefully:
 
 Workers handle each signal as follows:
 
-* TERM: wWorkers will stop after finishing current job.
-* USR1: workers will reopen log files.
-* USR2: new workers will start, old workers will stop after finishing current job.
+* TERM: Workers stop after finishing current jobs.
+* QUIT: Workers are killed immediately.
+* USR1: Workers reopen log files.
+* USR2: New workers start, old workers stop after finishing current jobs.
 
 ## Contributing
 

@@ -1,19 +1,10 @@
 require 'fileutils'
 require 'logger'
-require 'timeout'
-require 'delayed_job'
 require_relative 'util'
-require_relative 'master/version'
-require_relative 'master/command'
-require_relative 'master/dsl'
-require_relative 'worker/info'
-require_relative 'worker_plugins/all'
+require_relative 'worker_info'
+require_relative 'master/all'
 
 module Delayed
-  class Worker
-    attr_accessor :master_logger, :max_memory
-  end
-
   class Master
     attr_reader :configs, :pid_file, :logger, :worker_infos
 
@@ -26,6 +17,8 @@ module Delayed
       @signal_handler = SignalHandler.new(self)
       @worker_factory = WorkerFactory.new(self)
       @worker_monitor = WorkerMonitor.new(self, @worker_factory)
+
+      load_app if @configs[:preload_app]
     end
 
     def run
@@ -44,8 +37,20 @@ module Delayed
       @logger.info "shut down master"
     end
 
+    def load_app
+      require File.join(@configs[:working_directory], 'config', 'environment')
+      require_relative 'ext/worker'
+      require_relative 'worker_plugins/all'
+      Delayed::Worker.before_fork
+    end
+
     def prepared?
       @prepared
+    end
+
+    def quit
+      kill_workers
+      @stop = true
     end
 
     def stop
@@ -89,7 +94,7 @@ module Delayed
 
     def setup_worker_infos(worker_configs)
       worker_configs.map.with_index do |config, i|
-        Delayed::Worker::Info.new(i, config)
+        Delayed::WorkerInfo.new(i, config)
       end
     end
 
@@ -113,13 +118,15 @@ module Delayed
       end
 
       def register
-        %w(TERM INT USR1 USR2).each do |signal|
+        %w(TERM INT QUIT USR1 USR2).each do |signal|
           trap(signal) do
             Thread.new do
               @logger.info "received #{signal} signal"
               case signal
               when 'TERM', 'INT'
                 @master.stop
+              when 'QUIT'
+                @master.quit
               when 'USR1'
                 @master.reopen_files
               when 'USR2'
@@ -149,6 +156,7 @@ module Delayed
         @logger = @master.logger
         @before_fork = @master.configs[:before_fork]
         @after_fork = @master.configs[:after_fork]
+        @preload_app = @master.configs[:preload_app]
       end
 
       def fork_workers
@@ -161,6 +169,7 @@ module Delayed
       def fork_worker(worker_info)
         run_callback(@before_fork, worker_info)
         worker_info.pid = fork do
+          @master.load_app unless @preload_app
           run_callback(@after_fork, worker_info)
           $0 = worker_info.title
           worker = create_new_worker(worker_info)
