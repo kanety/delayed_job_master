@@ -1,47 +1,50 @@
 require 'fileutils'
 require 'logger'
-require_relative 'util'
-require_relative 'worker_info'
-require_relative 'master/all'
+require 'ostruct'
+require_relative 'util/file_reopener'
+require_relative 'master/version'
+require_relative 'master/command'
+require_relative 'master/callback'
+require_relative 'master/worker_info'
+require_relative 'master/worker_factory'
+require_relative 'master/signal_handler'
 
 module Delayed
   class Master
-    attr_reader :configs, :pid_file, :logger, :worker_infos
+    attr_reader :config, :logger, :worker_infos
 
     def initialize(argv)
-      @configs = Delayed::Master::Command.new(argv).configs
-      @pid_file = @configs[:pid_file]
-      @logger = setup_logger(@configs[:log_file], @configs[:log_level])
-      @worker_infos = setup_worker_infos(@configs[:worker_configs])
+      config = Command.new(argv).config
+      @config = OpenStruct.new(config).freeze
+      @logger = setup_logger(@config.log_file, @config.log_level)
+      @worker_infos = []
 
       @signal_handler = SignalHandler.new(self)
-      @worker_factory = WorkerFactory.new(self)
-      @worker_monitor = WorkerMonitor.new(self, @worker_factory)
-
-      load_app if @configs[:preload_app]
+      @worker_factory = WorkerFactory.new(self, config)
+      load_app
     end
 
     def run
-      daemonize if @configs[:daemon]
+      daemonize if @config.daemon
 
       create_pid_file
       @logger.info "started master #{Process.pid}"
 
       @signal_handler.register
-      @worker_factory.fork_workers
+      @worker_factory.init_workers
+
       @prepared = true
 
-      @worker_monitor.run
+      @worker_factory.monitor
 
       remove_pid_file
       @logger.info "shut down master"
     end
 
     def load_app
-      require File.join(@configs[:working_directory], 'config', 'environment')
-      require_relative 'ext/worker'
-      require_relative 'worker_plugins/all'
-      Delayed::Worker.before_fork
+      require File.join(@config.working_directory, 'config', 'environment')
+      require_relative 'master/job_counter'
+      require_relative 'worker/extension'
     end
 
     def prepared?
@@ -65,7 +68,7 @@ module Delayed
     def reopen_files
       @signal_handler.dispatch('USR1')
       @logger.info "reopening files..."
-      Delayed::Util.reopen_files
+      Delayed::Util::FileReopener.reopen
       @logger.info "reopened"
     end
 
@@ -92,148 +95,17 @@ module Delayed
       logger
     end
 
-    def setup_worker_infos(worker_configs)
-      worker_configs.map.with_index do |config, i|
-        Delayed::WorkerInfo.new(i, config)
-      end
-    end
-
     def create_pid_file
-      FileUtils.mkdir_p(File.dirname(@pid_file))
-      File.write(@pid_file, Process.pid)
+      FileUtils.mkdir_p(File.dirname(@config.pid_file))
+      File.write(@config.pid_file, Process.pid)
     end
 
     def remove_pid_file
-      File.delete(@pid_file) if File.exist?(@pid_file)
+      File.delete(@config.pid_file) if File.exist?(@config.pid_file)
     end
 
     def daemonize
       Process.daemon(true)
-    end
-
-    class SignalHandler
-      def initialize(master)
-        @master = master
-        @logger = @master.logger
-      end
-
-      def register
-        %w(TERM INT QUIT USR1 USR2).each do |signal|
-          trap(signal) do
-            Thread.new do
-              @logger.info "received #{signal} signal"
-              case signal
-              when 'TERM', 'INT'
-                @master.stop
-              when 'QUIT'
-                @master.quit
-              when 'USR1'
-                @master.reopen_files
-              when 'USR2'
-                @master.restart
-              end
-            end
-          end
-        end
-      end
-
-      def dispatch(signal)
-        @master.worker_infos.each do |worker_info|
-          next unless worker_info.pid
-          begin
-            Process.kill signal, worker_info.pid
-            @logger.info "sent #{signal} signal to worker #{worker_info.pid}"
-          rescue
-            @logger.error "failed to send #{signal} signal to worker #{worker_info.pid}"
-          end
-        end
-      end
-    end
-
-    class WorkerFactory
-      def initialize(master)
-        @master = master
-        @logger = @master.logger
-        @before_fork = @master.configs[:before_fork]
-        @after_fork = @master.configs[:after_fork]
-        @preload_app = @master.configs[:preload_app]
-      end
-
-      def fork_workers
-        @master.worker_infos.each do |worker_info|
-          fork_worker(worker_info)
-          @logger.info "started worker #{worker_info.pid}"
-        end
-      end
-
-      def fork_worker(worker_info)
-        run_callback(@before_fork, worker_info)
-        worker_info.pid = fork do
-          @master.load_app unless @preload_app
-          run_callback(@after_fork, worker_info)
-          $0 = worker_info.title
-          worker = create_new_worker(worker_info)
-          worker.start
-        end
-      end
-
-      private
-
-      def run_callback(calback, worker_info)
-        calback.call(@master, worker_info) if calback
-      end
-
-      def create_new_worker(worker_info)
-        worker = Delayed::Worker.new(worker_info.configs)
-        [:max_run_time, :max_attempts].each do |key|
-          value = worker_info.configs[key]
-          Delayed::Worker.send("#{key}=", value) if value
-        end
-        [:max_memory].each do |key|
-          value = worker_info.configs[key]
-          worker.send("#{key}=", value) if value
-        end
-        worker.master_logger = @logger
-        worker
-      end
-    end
-
-    class WorkerMonitor
-      def initialize(master, worker_factory)
-        @master = master
-        @logger = master.logger
-        @worker_factory = worker_factory
-        @monitor_wait = @master.configs[:monitor_wait]
-      end
-
-      def run
-        loop do
-          break if @master.stop?
-          if (pid = wait_pid)
-            fork_new_worker_for(pid)
-          end
-          sleep @monitor_wait.to_i
-        end
-      end
-
-      private
-
-      def wait_pid
-        begin
-          Process.waitpid(-1, Process::WNOHANG)
-        rescue Errno::ECHILD
-          nil
-        end
-      end
-
-      def fork_new_worker_for(pid)
-        worker_info = @master.worker_infos.detect { |wi| wi.pid == pid }
-        return unless worker_info
-
-        @logger.info "worker #{worker_info.pid} seems to be killed, forking new worker..."
-        @worker_factory.fork_worker(worker_info)
-        @logger.info "forked worker #{worker_info.pid}"
-      end
     end
   end
 end

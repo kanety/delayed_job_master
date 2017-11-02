@@ -1,9 +1,6 @@
 # working directory
 working_directory Dir.pwd
 
-# preload application
-preload_app true
-
 # monitor wait time in second
 monitor_wait 5
 
@@ -21,6 +18,12 @@ add_worker do |worker|
   # queue name for the worker
   worker.queues %w(queue1)
 
+  # worker control (:static or :dynamic)
+  worker.control :static
+
+  # worker count
+  worker.count 1
+
   # max memory in MB
   worker.max_memory 300
 
@@ -36,6 +39,8 @@ end
 # worker2
 add_worker do |worker|
   worker.queues %w(queue2)
+  worker.control :dynamic
+  worker.count 2
 end
 
 before_fork do |master, worker_info|

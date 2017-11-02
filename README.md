@@ -1,26 +1,28 @@
 # DelayedJobMaster
 
-A simple delayed_job master process for managing multiple workers.
+A simple delayed_job master process to control multiple workers.
 
 ## Features
 
-* Preload application and fork multiple workers fastly.
-* Monitor workers and fork new processes if they are killed.
-* Check worker's memory and restart the worker exeeded memory limit.
-* Trap USR1 signal to reopen log files for all workers.
-* Trap USR2 signal to restart master and workers gracefully.
+* Preload application and fork workers fastly.
+* Monitor workers and fork new workers if necessary.
+* Restart workers with memory limitation.
+* Trap USR1 signal to reopen log files.
+* Trap USR2 signal to restart master and workers.
+* Auto-scale worker processes.
 
 ## Dependencies
 
 * ruby 2.3+
 * delayed_job 4.1
+* delayed_job_active_record 4.1
 
 ## Installation
 
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'delayed_job_master', require: 'false'
+gem 'delayed_job_master', require: false
 ```
 
 And then execute:
@@ -41,9 +43,6 @@ Edit `config/delayed_job_master.rb`:
 # working directory
 working_directory Dir.pwd
 
-# preload application
-preload_app true
-
 # monitor wait time in second
 monitor_wait 5
 
@@ -61,8 +60,14 @@ add_worker do |worker|
   # queue name for the worker
   worker.queues %w(queue1)
 
+  # worker control (:static or :dynamic)
+  worker.control :static
+
+  # worker count
+  worker.count 1
+
   # max memory in MB
-  # worker.max_memory 300
+  worker.max_memory 300
 
   # configs below are same as delayed_job, see https://github.com/collectiveidea/delayed_job
   # worker.sleep_delay 5
@@ -76,6 +81,8 @@ end
 # worker2
 add_worker do |worker|
   worker.queues %w(queue2)
+  worker.control :dynamic
+  worker.count 2
 end
 
 before_fork do |master, worker_info|
@@ -120,6 +127,23 @@ Workers handle each signal as follows:
 * QUIT: Workers are killed immediately.
 * USR1: Workers reopen log files.
 * USR2: New workers start, old workers stop after finishing current jobs.
+
+## Worker status
+
+`ps` command shows worker status as follows:
+
+```
+$ ps aux
+... delayed_job.0 (queue1)
+... delayed_job.1 (queue2) [BUSY]  # This process is currently proceeding some jobs
+```
+
+```
+$ ps aux
+... delayed_job.0 (queue1) [OLD]  # When restarted gracefully, old process will stop after finishing current jobs.
+... delayed_job.0 (queue1)
+... delayed_job.1 (queue2)
+```
 
 ## Contributing
 
