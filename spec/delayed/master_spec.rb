@@ -76,7 +76,7 @@ describe Delayed::Master do
     thread = start_master_thread(master)
 
     2.times { [].delay(queue: 'dynamic').pop }
-    sleep 5
+    sleep 20
 
     master.stop
     thread.join

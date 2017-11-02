@@ -4,7 +4,7 @@ module Delayed
       def initialize(master, config = {})
         @master = master
         @config = OpenStruct.new(config).freeze
-        @callback = Delayed::Master::Callback.new(config)
+        @callback = Delayed::Master::Callback.new(master, config)
 
         @dynamic_worker_configs = @config.worker_configs.select { |wc| wc[:control] == :dynamic }
       end
@@ -32,9 +32,9 @@ module Delayed
       private
 
       def fork_worker(worker_info)
-        @callback.run(:before_fork, worker_info)
+        @callback.run(:before_fork, @master, worker_info)
         worker_info.pid = fork do
-          @callback.run(:after_fork, worker_info)
+          @callback.run(:after_fork, @master, worker_info)
           $0 = worker_info.title
           worker = create_new_worker(worker_info)
           worker.start
@@ -70,11 +70,9 @@ module Delayed
       end
 
       def wait_pid
-        begin
-          Process.waitpid(-1, Process::WNOHANG)
-        rescue Errno::ECHILD
-          nil
-        end
+        Process.waitpid(-1, Process::WNOHANG)
+      rescue Errno::ECHILD
+        nil
       end
 
       def check_dynamic_worker
