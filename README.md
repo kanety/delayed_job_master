@@ -15,7 +15,11 @@ A simple delayed_job master process to control multiple workers.
 
 * ruby 2.3+
 * delayed_job 4.1
+
+Supported delayed_job backends:
+
 * delayed_job_active_record 4.1
+* delayed_job_mongoid 2.3
 
 ## Installation
 
@@ -134,15 +138,14 @@ Workers handle each signal as follows:
 
 ```
 $ ps aux
-... delayed_job.0 (queue1)
-... delayed_job.1 (queue2) [BUSY]  # This process is currently proceeding some jobs
+... delayed_job.0 (queue1) [BUSY]  # BUSY process is currently proceeding some jobs
 ```
+
+After graceful restart, you may find OLD process.
 
 ```
 $ ps aux
-... delayed_job.0 (queue1) [OLD]  # When restarted gracefully, old process will stop after finishing current jobs.
-... delayed_job.0 (queue1)
-... delayed_job.1 (queue2)
+... delayed_job.0 (queue1) [BUSY] [OLD]  # OLD process will stop after finishing current jobs.
 ```
 
 ## Contributing
