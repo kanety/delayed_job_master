@@ -6,7 +6,7 @@ require_relative 'master/version'
 require_relative 'master/command'
 require_relative 'master/callback'
 require_relative 'master/worker_info'
-require_relative 'master/worker_factory'
+require_relative 'master/worker_pool'
 require_relative 'master/signal_handler'
 
 module Delayed
@@ -20,22 +20,20 @@ module Delayed
       @worker_infos = []
 
       @signal_handler = SignalHandler.new(self)
-      @worker_factory = WorkerFactory.new(self, config)
-      load_app
+      @worker_pool = WorkerPool.new(self, config)
     end
 
     def run
+      load_app
+      show_worker_configs
       daemonize if @config.daemon
 
       create_pid_file
       @logger.info "started master #{Process.pid}"
 
       @signal_handler.register
-      @worker_factory.init_workers
-
-      @prepared = true
-
-      @worker_factory.monitor
+      @worker_pool.init
+      @worker_pool.monitor_while { stop? }
 
       remove_pid_file
       @logger.info "shut down master"
@@ -48,7 +46,7 @@ module Delayed
     end
 
     def prepared?
-      @prepared
+      @worker_pool.prepared?
     end
 
     def quit
@@ -106,6 +104,12 @@ module Delayed
 
     def daemonize
       Process.daemon(true)
+    end
+
+    def show_worker_configs
+      @config.worker_configs.each do |config|
+        puts "#{config[:count]} worker for '#{config[:queues].join(',')}' under #{config[:control]} control"
+      end
     end
   end
 end

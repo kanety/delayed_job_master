@@ -3,13 +3,15 @@ module Delayed
     class SignalHandler
       def initialize(master)
         @master = master
+        @logger = master.logger
+        @worker_infos = master.worker_infos
       end
 
       def register
         %w(TERM INT QUIT USR1 USR2).each do |signal|
           trap(signal) do
             Thread.new do
-              @master.logger.info "received #{signal} signal"
+              @logger.info "received #{signal} signal"
               case signal
               when 'TERM', 'INT'
                 @master.stop
@@ -26,13 +28,13 @@ module Delayed
       end
 
       def dispatch(signal)
-        @master.worker_infos.each do |worker_info|
+        @worker_infos.each do |worker_info|
           next unless worker_info.pid
           begin
             Process.kill signal, worker_info.pid
-            @master.logger.info "sent #{signal} signal to worker #{worker_info.pid}"
+            @logger.info "sent #{signal} signal to worker #{worker_info.pid}"
           rescue
-            @master.logger.error "failed to send #{signal} signal to worker #{worker_info.pid}"
+            @logger.error "failed to send #{signal} signal to worker #{worker_info.pid}"
           end
         end
       end

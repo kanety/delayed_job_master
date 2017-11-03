@@ -1,8 +1,7 @@
 module Delayed
   class Master
     class Callback
-      def initialize(master, config = {})
-        @master = master
+      def initialize(config = {})
         @config = config.select { |k, _| [:before_fork, :after_fork].include?(k) }
       end
 

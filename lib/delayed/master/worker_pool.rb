@@ -1,32 +1,40 @@
 module Delayed
   class Master
-    class WorkerFactory
+    class WorkerPool
       def initialize(master, config = {})
         @master = master
+        @logger = master.logger
+        @worker_infos = master.worker_infos
+
         @config = OpenStruct.new(config).freeze
-        @callback = Delayed::Master::Callback.new(master, config)
+        @static_worker_configs, @dynamic_worker_configs = @config.worker_configs.partition { |wc| wc[:control] == :static }
 
-        @dynamic_worker_configs = @config.worker_configs.select { |wc| wc[:control] == :dynamic }
+        @callback = Delayed::Master::Callback.new(config)
       end
 
-      def init_workers
-        @config.worker_configs.each_with_index do |worker_config, i|
-          next if worker_config[:control] == :dynamic
-
-          worker_info = Delayed::Master::WorkerInfo.new(i, worker_config)
-          @master.worker_infos << worker_info
+      def init
+        @static_worker_configs.each_with_index do |config, i|
+          worker_info = Delayed::Master::WorkerInfo.new(i, config)
+          @worker_infos << worker_info
           fork_worker(worker_info)
-          @master.logger.info "started worker #{worker_info.pid}"
+          @logger.info "started worker #{worker_info.pid}"
         end
+
+        @prepared = true
+        debug_worker_infos
       end
 
-      def monitor
+      def monitor_while(&block)
         loop do
-          break if @master.stop?
+          break if block.call
           check_pid
           check_dynamic_worker
           sleep @config.monitor_wait.to_i
         end
+      end
+
+      def prepared?
+        @prepared
       end
 
       private
@@ -51,21 +59,21 @@ module Delayed
           value = worker_info.config[key]
           worker.send("#{key}=", value) if value
         end
-        worker.master_logger = @master.logger
+        worker.master_logger = @logger
         worker
       end
 
       def check_pid
         pid = wait_pid
         return unless pid
-        worker_info = @master.worker_infos.detect { |wi| wi.pid == pid }
+        worker_info = @worker_infos.detect { |wi| wi.pid == pid }
         return unless worker_info
 
         case worker_info.config[:control]
         when :static
           fork_alt_worker(worker_info)
         when :dynamic
-          @master.worker_infos.delete(worker_info)
+          @worker_infos.delete(worker_info)
         end
       end
 
@@ -77,10 +85,12 @@ module Delayed
 
       def check_dynamic_worker
         @dynamic_worker_configs.each do |worker_config|
-          current_count = @master.worker_infos.count { |wi| wi.config[:queues] == worker_config[:queues] }
+          current_count = @worker_infos.count { |wi| wi.config[:queues] == worker_config[:queues] }
           remaining_count = worker_config[:count] - current_count
           if remaining_count > 0 && (job_count = count_job_for_worker(worker_config)) > 0
-            [remaining_count, job_count].min.times { fork_new_worker(worker_config) }
+            [remaining_count, job_count].min.times do
+              fork_dynamic_worker(worker_config)
+            end
           end
         end
       end
@@ -89,19 +99,29 @@ module Delayed
         Delayed::Master::JobCounter.count(worker_config)
       end
 
-      def fork_new_worker(worker_config)
-        worker_info = Delayed::Master::WorkerInfo.new(@master.worker_infos.size, worker_config)
-        @master.worker_infos << worker_info
+      def fork_dynamic_worker(worker_config)
+        worker_info = Delayed::Master::WorkerInfo.new(@worker_infos.size, worker_config)
+        @worker_infos << worker_info
 
-        @master.logger.info "forking dynamic worker..."
+        @logger.info "forking dynamic worker..."
         fork_worker(worker_info)
-        @master.logger.info "forked worker #{worker_info.pid}"
+        @logger.info "forked worker #{worker_info.pid}"
+
+        debug_worker_infos
       end
 
       def fork_alt_worker(worker_info)
-        @master.logger.info "worker #{worker_info.pid} seems to be killed, forking alternative worker..."
+        @logger.info "worker #{worker_info.pid} seems to be killed, forking alternative worker..."
         fork_worker(worker_info)
-        @master.logger.info "forked worker #{worker_info.pid}"
+        @logger.info "forked worker #{worker_info.pid}"
+
+        debug_worker_infos
+      end
+
+      def debug_worker_infos
+        @worker_infos.each do |worker_info|
+          @logger.debug "#{worker_info.pid}: #{worker_info.title}"
+        end
       end
     end
   end

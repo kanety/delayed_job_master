@@ -48,7 +48,7 @@ describe Delayed::Master do
 
   it 'forks workers' do
     proc_title = $0
-    allow_any_instance_of(Delayed::Master::WorkerFactory).to receive(:fork).twice { |&block| block.call }
+    allow_any_instance_of(Delayed::Master::WorkerPool).to receive(:fork).twice { |&block| block.call }
     allow_any_instance_of(Delayed::Worker).to receive(:start).twice
 
     thread = start_master_thread(master, false)

@@ -13,7 +13,7 @@ pid_file "#{app_root}/tmp/pids/delayed_job_master.pid"
 log_file "#{app_root}/log/delayed_job_master.log"
 
 # log level
-log_level :info
+log_level :debug
 
 # worker1
 add_worker do |worker|
