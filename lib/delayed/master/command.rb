@@ -1,12 +1,13 @@
 require 'optparse'
+require_relative 'dsl'
 
 module Delayed
   class Master
     class Command
-      attr_reader :configs
+      attr_reader :config
 
       def initialize(args)
-        @configs = {}
+        @config = {}
 
         OptionParser.new { |opt|
           opt.banner = <<-EOS
@@ -19,10 +20,10 @@ module Delayed
             exit
           end
           opt.on('-D', '--daemon', 'Start master as a daemon') do |boolean|
-            @configs[:daemon] = boolean
+            @config[:daemon] = boolean
           end
           opt.on('-c', '--config=FILE', 'Specify config file') do |file|
-            @configs.merge!(Delayed::Master::DSL.new(file).configs)
+            @config.merge!(DSL.new(file).config)
           end
         }.parse(args)
       end

@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Yoshikazu Kaneta"]
   spec.email         = ["kaneta@sitebridge.co.jp"]
 
-  spec.summary       = %q{A simple delayed_job master process for managing multiple workers}
-  spec.description   = %q{A simple delayed_job master process for managing multiple workers}
+  spec.summary       = %q{A simple delayed_job master process to control multiple workers}
+  spec.description   = %q{A simple delayed_job master process to control multiple workers}
   spec.homepage      = "https://github.com/kanety/delayed_job_master"
   spec.license       = "MIT"
 
@@ -26,9 +26,9 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency "rails"
   spec.add_development_dependency "rake"
-  spec.add_development_dependency "rspec"
   spec.add_development_dependency "rspec-rails"
   spec.add_development_dependency "simplecov"
   spec.add_development_dependency "sqlite3"
-  spec.add_development_dependency "delayed_job_active_record"
+  spec.add_development_dependency "delayed_job_mongoid", ">= 2.3"
+  spec.add_development_dependency "delayed_job_active_record", ">= 4.1"
 end

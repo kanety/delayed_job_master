@@ -5,7 +5,7 @@ class Delayed::Plugins::SignalHandler < Delayed::Plugin
         trap('USR1') do
           Thread.new do
             master_logger.info "reopening files..."
-            Delayed::Util.reopen_files
+            Delayed::Util::FileReopener.reopen
             master_logger.info "reopened"
           end
         end

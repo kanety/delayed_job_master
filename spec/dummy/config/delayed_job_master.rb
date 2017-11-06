@@ -3,9 +3,6 @@ app_root = defined?(Rails) ? Rails.root : Dir.pwd
 # working directory
 working_directory app_root
 
-# preload application
-preload_app true
-
 # monitor wait time in second
 monitor_wait 1
 
@@ -16,7 +13,7 @@ pid_file "#{app_root}/tmp/pids/delayed_job_master.pid"
 log_file "#{app_root}/log/delayed_job_master.log"
 
 # log level
-log_level :info
+log_level :debug
 
 # worker1
 add_worker do |worker|
@@ -38,6 +35,13 @@ end
 # worker2
 add_worker do |worker|
   worker.queues %w(queue2)
+end
+
+# worker3
+add_worker do |worker|
+  worker.queues %w(dynamic)
+  worker.control :dynamic
+  worker.count 2
 end
 
 before_fork do |master, worker_info|

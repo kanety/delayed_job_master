@@ -2,6 +2,9 @@ describe Delayed::Master do
   subject(:master) {
     Delayed::Master.new(['-c', Rails.root.join("config/delayed_job_master.rb").to_s])
   }
+  before {
+    Delayed::Job.delete_all
+  }
 
   def start_master_thread(master, wait_worker = true)
     thread = Thread.new do
@@ -19,7 +22,7 @@ describe Delayed::Master do
     expect(Delayed::Master::VERSION).not_to be nil
   end
 
-  it 'runs a master' do
+  it 'runs a master process' do
     thread = start_master_thread(master)
 
     master.stop
@@ -45,7 +48,7 @@ describe Delayed::Master do
 
   it 'forks workers' do
     proc_title = $0
-    allow_any_instance_of(Delayed::Master::WorkerFactory).to receive(:fork).twice { |&block| block.call }
+    allow_any_instance_of(Delayed::Master::WorkerPool).to receive(:fork).twice { |&block| block.call }
     allow_any_instance_of(Delayed::Worker).to receive(:start).twice
 
     thread = start_master_thread(master, false)
@@ -67,5 +70,19 @@ describe Delayed::Master do
       master.stop
       thread.join
     end
+  end
+
+  it 'starts dynamic workers' do
+    thread = start_master_thread(master)
+
+    2.times { [].delay(queue: 'dynamic').pop }
+    sleep 20
+
+    master.stop
+    thread.join
+
+    pids = master.worker_infos.map(&:pid)
+    expect(pids.size).to eq(2)
+    expect(Delayed::Job.count).to eq(0)
   end
 end

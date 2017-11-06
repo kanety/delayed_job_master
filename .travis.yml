@@ -1,7 +1,12 @@
 language: ruby
+services:
+  - mongodb
 rvm:
   - 2.3.4
   - 2.4.1
+gemfile:
+  - gemfiles/active_record.gemfile
+  - gemfiles/mongoid.gemfile
 before_install:
   - gem install bundler -v 1.15.3
 before_script:
