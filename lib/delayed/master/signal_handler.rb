@@ -30,13 +30,17 @@ module Delayed
       def dispatch(signal)
         @worker_infos.each do |worker_info|
           next unless worker_info.pid
-          begin
-            Process.kill signal, worker_info.pid
-            @logger.info "sent #{signal} signal to worker #{worker_info.pid}"
-          rescue
-            @logger.error "failed to send #{signal} signal to worker #{worker_info.pid}"
-          end
+          dispatch_to(signal, worker_info.pid)
         end
+      end
+
+      private
+
+      def dispatch_to(signal, pid)
+        Process.kill signal, pid
+        @logger.info "sent #{signal} signal to worker #{pid}"
+      rescue
+        @logger.error "failed to send #{signal} signal to worker #{pid}"
       end
     end
   end

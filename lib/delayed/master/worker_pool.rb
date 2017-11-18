@@ -27,8 +27,10 @@ module Delayed
       def monitor_while(&block)
         loop do
           break if block.call
-          check_pid
-          check_dynamic_worker
+          monitor do
+            check_pid
+            check_dynamic_worker
+          end
           sleep @config.monitor_wait.to_i
         end
       end
@@ -61,6 +63,14 @@ module Delayed
         end
         worker.master_logger = @logger
         worker
+      end
+
+      def monitor
+        @callback.run(:before_monitor, @master)
+        yield
+        @callback.run(:after_monitor, @master)
+      rescue Exception => e
+        @logger.warn "#{e.class}: #{e.message} at #{__FILE__}: #{__LINE__}"
       end
 
       def check_pid

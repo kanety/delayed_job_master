@@ -2,7 +2,7 @@ module Delayed
   class Master
     class Callback
       def initialize(config = {})
-        @config = config.select { |k, _| [:before_fork, :after_fork].include?(k) }
+        @config = config.select { |k, _| Delayed::Master::DSL::CALLBACK_CONFIGS.include?(k) }
       end
 
       def run(name, *args)
