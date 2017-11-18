@@ -16,7 +16,7 @@ A simple delayed_job master process to control multiple workers.
 * ruby 2.3+
 * delayed_job 4.1
 
-Supported delayed_job backends:
+## Supported delayed_job backends
 
 * delayed_job_active_record 4.1
 * delayed_job_mongoid 2.3
@@ -33,9 +33,9 @@ And then execute:
 
     $ bundle
 
-Create default files:
+Create config files:
 
-    $ rails generate delayed_job_master
+    $ rails generate delayed_job_master:config
 
 This command creates `bin/delayed_job_master` and `config/delayed_job_master.rb`.
 
@@ -95,6 +95,13 @@ end
 
 after_fork do |master, worker_info|
   Delayed::Worker.after_fork if defined?(Delayed::Worker)
+end
+
+before_monitor do |master|
+  ActiveRecord::Base.connection.verify! if defined?(ActiveRecord::Base)
+end
+
+after_monitor do |master|
 end
 ```
 

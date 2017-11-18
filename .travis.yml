@@ -2,8 +2,8 @@ language: ruby
 services:
   - mongodb
 rvm:
-  - 2.3.4
-  - 2.4.1
+  - 2.3
+  - 2.4
 gemfile:
   - gemfiles/active_record.gemfile
   - gemfiles/mongoid.gemfile
