@@ -4,11 +4,10 @@ services:
 rvm:
   - 2.3
   - 2.4
+  - 2.5
 gemfile:
   - gemfiles/active_record.gemfile
   - gemfiles/mongoid.gemfile
-before_install:
-  - gem install bundler -v 1.15.3
 before_script:
   - cd spec/dummy
   - bundle exec rake db:migrate RAILS_ENV=test
