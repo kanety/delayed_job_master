@@ -24,12 +24,12 @@ add_worker do |worker|
   worker.max_memory 300
 
   # settings below are same as delayed_job, see https://github.com/collectiveidea/delayed_job
-  # worker.sleep_delay 5
-  # worker.read_ahead 5
-  # worker.max_attempts 25
-  # worker.max_run_time 4.hours
-  # worker.min_priority 1
-  # worker.max_priority 10
+  worker.sleep_delay 5
+  worker.read_ahead 5
+  worker.max_attempts 25
+  worker.max_run_time 4.hours
+  worker.min_priority 1
+  worker.max_priority 10
 end
 
 # worker2

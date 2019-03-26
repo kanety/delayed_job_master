@@ -1,10 +1,12 @@
 describe Delayed::Master do
-  subject(:master) {
+  subject(:master) do
     Delayed::Master.new(['-c', Rails.root.join("config/delayed_job_master.rb").to_s])
-  }
-  before {
+  end
+
+  before do
     Delayed::Job.delete_all
-  }
+    allow(master).to receive(:exec).and_return(nil)
+  end
 
   def start_master_thread(master, wait_worker = true)
     thread = Thread.new do
@@ -16,10 +18,6 @@ describe Delayed::Master do
     sleep(1) until master.prepared? if wait_worker
 
     thread
-  end
-
-  it 'has a version number' do
-    expect(Delayed::Master::VERSION).not_to be nil
   end
 
   it 'runs a master process' do
@@ -63,8 +61,6 @@ describe Delayed::Master do
     it "traps #{signal} signals" do
       thread = start_master_thread(master)
 
-      expect(master).to receive(:exec) if signal == 'USR2'
-
       Process.kill(signal, Process.pid)
 
       master.stop
@@ -75,7 +71,7 @@ describe Delayed::Master do
   it 'starts dynamic workers' do
     thread = start_master_thread(master)
 
-    2.times { [].delay(queue: 'dynamic').pop }
+    2.times { [].delay(queue: 'dynamic', priority: 1).pop }
     sleep 20
 
     master.stop

@@ -1,5 +1,7 @@
 describe Delayed::Master::Command do
-  let(:config_file) { Rails.root.join("config/delayed_job_master.rb") }
+  let(:config_file) do
+    Rails.root.join("config/delayed_job_master.rb")
+  end
 
   it 'parses help option' do
     expect_any_instance_of(Delayed::Master::Command).to receive(:exit)

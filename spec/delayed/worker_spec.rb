@@ -1,16 +1,17 @@
 describe Delayed::Worker do
-  subject(:worker) {
+  subject(:worker) do
     worker = Delayed::Worker.new(queues: [])
     worker.max_memory = 1
     worker.master_logger = Logger.new(Rails.root.join("log/delayed_job_master.log"))
     worker
-  }
-  before {
+  end
+
+  before do
     Delayed::Job.delete_all
-  }
+  end
 
   def enqueue_job
-    [nil].delay.pop
+    [nil].delay(priority: 1).pop
   end
 
   def start_worker_thread(worker)
