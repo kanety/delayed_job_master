@@ -34,7 +34,7 @@ module Delayed
       class WorkerSetting
         SIMPLE_CONFIGS = [:control, :count, :max_memory,
                           :min_priority, :max_priority, :sleep_delay, :read_ahead, :exit_on_complete,
-                          :max_attempts, :max_run_time]
+                          :max_attempts, :max_run_time, :destroy_failed_jobs]
         ARRAY_CONFIGS  = [:queues]
 
         attr_reader :config

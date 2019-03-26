@@ -34,6 +34,7 @@ add_worker do |worker|
   # worker.max_run_time 4.hours
   # worker.min_priority 1
   # worker.max_priority 10
+  # worker.destroy_failed_jobs true
 end
 
 # worker2

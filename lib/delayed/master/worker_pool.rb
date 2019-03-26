@@ -53,9 +53,10 @@ module Delayed
 
       def create_new_worker(worker_info)
         worker = Delayed::Worker.new(worker_info.config)
-        [:max_run_time, :max_attempts].each do |key|
-          value = worker_info.config[key]
-          Delayed::Worker.send("#{key}=", value) if value
+        [:max_run_time, :max_attempts, :destroy_failed_jobs].each do |key|
+          if worker_info.config.key?(key)
+            Delayed::Worker.send("#{key}=", worker_info.config[key])
+          end
         end
         [:max_memory].each do |key|
           value = worker_info.config[key]
