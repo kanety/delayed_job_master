@@ -1,31 +1,29 @@
 require 'fileutils'
 require 'logger'
-require 'ostruct'
-require_relative 'util/file_reopener'
 require_relative 'master/version'
 require_relative 'master/command'
 require_relative 'master/callback'
-require_relative 'master/worker_info'
+require_relative 'master/worker'
 require_relative 'master/worker_pool'
 require_relative 'master/signal_handler'
+require_relative 'master/util/file_reopener'
 
 module Delayed
   class Master
-    attr_reader :config, :logger, :worker_infos
+    attr_reader :config, :logger, :workers
 
     def initialize(argv)
-      config = Command.new(argv).config
-      @config = OpenStruct.new(config).freeze
+      @config = Command.new(argv).config
       @logger = setup_logger(@config.log_file, @config.log_level)
-      @worker_infos = []
+      @workers = []
 
       @signal_handler = SignalHandler.new(self)
-      @worker_pool = WorkerPool.new(self, config)
+      @worker_pool = WorkerPool.new(self, @config)
     end
 
     def run
       load_app
-      show_worker_configs
+      show_config
       daemonize if @config.daemon
 
       create_pid_file
@@ -66,7 +64,7 @@ module Delayed
     def reopen_files
       @signal_handler.dispatch('USR1')
       @logger.info "reopening files..."
-      Delayed::Util::FileReopener.reopen
+      Util::FileReopener.reopen
       @logger.info "reopened"
     end
 
@@ -106,9 +104,9 @@ module Delayed
       Process.daemon(true)
     end
 
-    def show_worker_configs
-      @config.worker_configs.each do |config|
-        puts "#{config[:count]} worker for '#{config[:queues].join(',')}' under #{config[:control]} control"
+    def show_config
+      @config.workers.each do |setting|
+        puts "#{setting.count} worker for '#{setting.queues.join(',')}' under #{setting.control} control"
       end
     end
   end

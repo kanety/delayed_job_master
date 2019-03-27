@@ -4,12 +4,12 @@ module Delayed
   class Master
     class JobCounter
       class << self
-        def count(config)
+        def count(setting)
           right_now = Delayed::Job.db_time_now
-          jobs = reservation_criteria(right_now, config[:max_run_time] || Delayed::Worker::DEFAULT_MAX_RUN_TIME)
-          jobs = jobs.gte(priority: config[:min_priority].to_i) if config[:min_priority]
-          jobs = jobs.lte(priority: config[:max_priority].to_i) if config[:max_priority]
-          jobs = jobs.any_in(queue: config[:queues]) if config[:queues].any?
+          jobs = reservation_criteria(right_now, setting.max_run_time || Delayed::Worker::DEFAULT_MAX_RUN_TIME)
+          jobs = jobs.gte(priority: setting.min_priority.to_i) if setting.min_priority
+          jobs = jobs.lte(priority: setting.max_priority.to_i) if setting.max_priority
+          jobs = jobs.any_in(queue: setting.queues) if setting.queues.any?
           jobs.count
         end
 

@@ -1,27 +1,27 @@
 module Delayed
   class Master
     class WorkerPool
-      def initialize(master, config = {})
+      def initialize(master, config)
         @master = master
+        @config = config
+
         @logger = master.logger
-        @worker_infos = master.worker_infos
+        @workers = master.workers
 
-        @config = OpenStruct.new(config).freeze
-        @static_worker_configs, @dynamic_worker_configs = @config.worker_configs.partition { |wc| wc[:control] == :static }
-
+        @static_settings, @dynamic_settings = config.workers.partition { |conf| conf.control == :static }
         @callback = Delayed::Master::Callback.new(config)
       end
 
       def init
-        @static_worker_configs.each_with_index do |config, i|
-          worker_info = Delayed::Master::WorkerInfo.new(i, config)
-          @worker_infos << worker_info
-          fork_worker(worker_info)
-          @logger.info "started worker #{worker_info.pid}"
+        @static_settings.each_with_index do |setting, i|
+          worker = Delayed::Master::Worker.new(i, setting)
+          @workers << worker
+          fork_worker(worker)
+          @logger.info "started worker #{worker.pid}"
         end
 
         @prepared = true
-        debug_worker_infos
+        print_workers
       end
 
       def monitor_while(&block)
@@ -41,29 +41,29 @@ module Delayed
 
       private
 
-      def fork_worker(worker_info)
-        @callback.run(:before_fork, @master, worker_info)
-        worker_info.pid = fork do
-          @callback.run(:after_fork, @master, worker_info)
-          $0 = worker_info.title
-          worker = create_new_worker(worker_info)
-          worker.start
+      def fork_worker(worker)
+        @callback.run(:before_fork, @master, worker)
+        worker.pid = fork do
+          @callback.run(:after_fork, @master, worker)
+          $0 = worker.title
+          start(worker)
         end
       end
 
-      def create_new_worker(worker_info)
-        worker = Delayed::Worker.new(worker_info.config)
+      def start(worker)
+        instance = Delayed::Worker.new(worker.setting.data)
         [:max_run_time, :max_attempts, :destroy_failed_jobs].each do |key|
-          if worker_info.config.key?(key)
-            Delayed::Worker.send("#{key}=", worker_info.config[key])
+          if (value = worker.setting.send(key))
+            Delayed::Worker.send("#{key}=", value)
           end
         end
         [:max_memory].each do |key|
-          value = worker_info.config[key]
-          worker.send("#{key}=", value) if value
+          if (value = worker.setting.send(key))
+            instance.send("#{key}=", value)
+          end
         end
-        worker.master_logger = @logger
-        worker
+        instance.master_logger = @logger
+        instance.start
       end
 
       def monitor
@@ -77,14 +77,14 @@ module Delayed
       def check_pid
         pid = wait_pid
         return unless pid
-        worker_info = @worker_infos.detect { |wi| wi.pid == pid }
-        return unless worker_info
+        worker = @workers.detect { |worker| worker.pid == pid }
+        return unless worker
 
-        case worker_info.config[:control]
+        case worker.setting.control
         when :static
-          fork_alt_worker(worker_info)
+          fork_alt_worker(worker)
         when :dynamic
-          @worker_infos.delete(worker_info)
+          @workers.delete(worker)
         end
       end
 
@@ -95,43 +95,43 @@ module Delayed
       end
 
       def check_dynamic_worker
-        @dynamic_worker_configs.each do |worker_config|
-          current_count = @worker_infos.count { |wi| wi.config[:queues] == worker_config[:queues] }
-          remaining_count = worker_config[:count] - current_count
-          if remaining_count > 0 && (job_count = count_job_for_worker(worker_config)) > 0
+        @dynamic_settings.each do |setting|
+          current_count = @workers.count { |worker| worker.setting.queues == setting.queues }
+          remaining_count = setting.count - current_count
+          if remaining_count > 0 && (job_count = count_job(setting)) > 0
             [remaining_count, job_count].min.times do
-              fork_dynamic_worker(worker_config)
+              fork_dynamic_worker(setting)
             end
           end
         end
       end
 
-      def count_job_for_worker(worker_config)
-        Delayed::Master::JobCounter.count(worker_config)
+      def count_job(setting)
+        Delayed::Master::JobCounter.count(setting)
       end
 
-      def fork_dynamic_worker(worker_config)
-        worker_info = Delayed::Master::WorkerInfo.new(@worker_infos.size, worker_config)
-        @worker_infos << worker_info
+      def fork_dynamic_worker(setting)
+        worker = Delayed::Master::Worker.new(@workers.size, setting)
+        @workers << worker
 
         @logger.info "forking dynamic worker..."
-        fork_worker(worker_info)
-        @logger.info "forked worker #{worker_info.pid}"
+        fork_worker(worker)
+        @logger.info "forked worker #{worker.pid}"
 
-        debug_worker_infos
+        print_workers
       end
 
-      def fork_alt_worker(worker_info)
-        @logger.info "worker #{worker_info.pid} seems to be killed, forking alternative worker..."
-        fork_worker(worker_info)
-        @logger.info "forked worker #{worker_info.pid}"
+      def fork_alt_worker(worker)
+        @logger.info "worker #{worker.pid} seems to be killed, forking alternative worker..."
+        fork_worker(worker)
+        @logger.info "forked worker #{worker.pid}"
 
-        debug_worker_infos
+        print_workers
       end
 
-      def debug_worker_infos
-        @worker_infos.each do |worker_info|
-          @logger.debug "#{worker_info.pid}: #{worker_info.title}"
+      def print_workers
+        @workers.each do |worker|
+          @logger.debug "#{worker.pid}: #{worker.title}"
         end
       end
     end

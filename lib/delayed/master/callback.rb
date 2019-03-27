@@ -1,12 +1,12 @@
 module Delayed
   class Master
     class Callback
-      def initialize(config = {})
-        @config = config.select { |k, _| Delayed::Master::DSL::CALLBACK_CONFIGS.include?(k) }
+      def initialize(config)
+        @callbacks = config.callbacks
       end
 
       def run(name, *args)
-        @config[name].call(*args) if @config[name]
+        @callbacks[name].call(*args) if @callbacks[name]
       end
     end
   end

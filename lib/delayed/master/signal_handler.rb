@@ -4,7 +4,7 @@ module Delayed
       def initialize(master)
         @master = master
         @logger = master.logger
-        @worker_infos = master.worker_infos
+        @workers = master.workers
       end
 
       def register
@@ -28,9 +28,9 @@ module Delayed
       end
 
       def dispatch(signal)
-        @worker_infos.each do |worker_info|
-          next unless worker_info.pid
-          dispatch_to(signal, worker_info.pid)
+        @workers.each do |worker|
+          next unless worker.pid
+          dispatch_to(signal, worker.pid)
         end
       end
 

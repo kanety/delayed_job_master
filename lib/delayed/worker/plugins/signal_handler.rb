@@ -7,7 +7,7 @@ module Delayed
             trap('USR1') do
               Thread.new do
                 master_logger.info "reopening files..."
-                Delayed::Util::FileReopener.reopen
+                Delayed::Master::Util::FileReopener.reopen
                 master_logger.info "reopened"
               end
             end

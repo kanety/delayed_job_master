@@ -26,21 +26,21 @@ describe Delayed::Master do
     master.stop
     thread.join
 
-    worker_count = master.worker_infos.count { |wi| wi.pid }
+    worker_count = master.workers.count { |worker| worker.pid }
     expect(worker_count).to eq(2)
   end
 
   it 'restarts a killed worker' do
     thread = start_master_thread(master)
 
-    pids = master.worker_infos.map(&:pid)
+    pids = master.workers.map(&:pid)
     pids.each { |pid| Process.kill('KILL', pid) }
     sleep 3
 
     master.stop
     thread.join
 
-    new_pids = master.worker_infos.map(&:pid)
+    new_pids = master.workers.map(&:pid)
     expect(pids).not_to eq(new_pids)
   end
 
@@ -77,7 +77,7 @@ describe Delayed::Master do
     master.stop
     thread.join
 
-    pids = master.worker_infos.map(&:pid)
+    pids = master.workers.map(&:pid)
     expect(pids.size).to eq(2)
     expect(Delayed::Job.count).to eq(0)
   end

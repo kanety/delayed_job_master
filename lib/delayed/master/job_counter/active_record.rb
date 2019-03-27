@@ -4,11 +4,11 @@ module Delayed
   class Master
     class JobCounter
       class << self
-        def count(config)
-          jobs = ready_to_run(config[:max_run_time] || Delayed::Worker::DEFAULT_MAX_RUN_TIME)
-          jobs.where!("priority >= ?", config[:min_priority]) if config[:min_priority]
-          jobs.where!("priority <= ?", config[:max_priority]) if config[:max_priority]
-          jobs.where!(queue: config[:queues]) if config[:queues].any?
+        def count(setting)
+          jobs = ready_to_run(setting.max_run_time || Delayed::Worker::DEFAULT_MAX_RUN_TIME)
+          jobs.where!("priority >= ?", setting.min_priority) if setting.min_priority
+          jobs.where!("priority <= ?", setting.max_priority) if setting.max_priority
+          jobs.where!(queue: setting.queues) if setting.queues.any?
           jobs.count
         end
 

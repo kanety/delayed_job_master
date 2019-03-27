@@ -1,17 +1,17 @@
 module Delayed
   class Master
-    class WorkerInfo
-      attr_reader :index, :config
+    class Worker
+      attr_reader :index, :setting
       attr_accessor :pid
 
-      def initialize(index, config = {})
+      def initialize(index, setting)
         @index = index
-        @config = config
+        @setting = setting
       end
 
       def title
         titles = ["delayed_job.#{@index}"]
-        titles << "(#{@config[:queues].join(',')})" if @config[:queues]
+        titles << "(#{@setting.queues.join(',')})" if @setting.queues
         titles.join(' ')
       end
     end

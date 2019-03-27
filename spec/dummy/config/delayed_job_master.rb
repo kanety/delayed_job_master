@@ -45,11 +45,11 @@ add_worker do |worker|
   worker.count 2
 end
 
-before_fork do |master, worker_info|
+before_fork do |master, worker|
   Delayed::Worker.before_fork if defined?(Delayed::Worker)
 end
 
-after_fork do |master, worker_info|
+after_fork do |master, worker|
   Delayed::Worker.after_fork if defined?(Delayed::Worker)
 end
 
