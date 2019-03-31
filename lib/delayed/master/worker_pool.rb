@@ -44,13 +44,15 @@ module Delayed
       def fork_worker(worker)
         @callback.run(:before_fork, @master, worker)
         worker.pid = fork do
+          worker.pid = Process.pid
+          worker.instance = create_instance(worker)
           @callback.run(:after_fork, @master, worker)
           $0 = worker.title
-          start(worker)
+          worker.instance.start
         end
       end
 
-      def start(worker)
+      def create_instance(worker)
         instance = Delayed::Worker.new(worker.setting.data)
         [:max_run_time, :max_attempts, :destroy_failed_jobs].each do |key|
           if (value = worker.setting.send(key))
@@ -63,7 +65,7 @@ module Delayed
           end
         end
         instance.master_logger = @logger
-        instance.start
+        instance
       end
 
       def monitor

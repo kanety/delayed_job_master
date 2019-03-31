@@ -2,7 +2,7 @@ module Delayed
   class Master
     class Worker
       attr_reader :index, :setting
-      attr_accessor :pid
+      attr_accessor :pid, :instance
 
       def initialize(index, setting)
         @index = index
