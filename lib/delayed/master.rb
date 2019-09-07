@@ -6,6 +6,7 @@ require_relative 'master/callback'
 require_relative 'master/worker'
 require_relative 'master/worker_pool'
 require_relative 'master/signal_handler'
+require_relative 'master/job_counter'
 require_relative 'master/util/file_reopener'
 
 module Delayed
@@ -39,7 +40,6 @@ module Delayed
 
     def load_app
       require File.join(@config.working_directory, 'config', 'environment')
-      require_relative 'master/job_counter'
       require_relative 'worker/extension'
     end
 

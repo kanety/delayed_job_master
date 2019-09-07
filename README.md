@@ -19,7 +19,6 @@ A simple delayed_job master process to control multiple workers.
 ## Supported delayed_job backends
 
 * delayed_job_active_record 4.1
-* delayed_job_mongoid 2.3
 
 ## Installation
 
