@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 
 require 'bundler/setup'
-require 'delayed/master'
+require 'delayed_job_master'
+
 Delayed::Master.new(ARGV).run
