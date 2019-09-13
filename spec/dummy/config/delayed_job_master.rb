@@ -41,7 +41,6 @@ end
 
 before_fork do |master, worker|
   Delayed::Worker.before_fork if defined?(Delayed::Worker)
-  #ActiveRecord::Base.clear_active_connections! if defined?(ActiveRecord::Base)
 end
 
 after_fork do |master, worker|

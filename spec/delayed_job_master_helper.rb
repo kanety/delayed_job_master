@@ -10,12 +10,14 @@ class Monitor
   class << self
     def wait_job_performing(limit)
       wait_while(limit) do
+        puts "wait job performing..."
         Delayed::Job.where(locked_at: nil).count > 0
       end
     end
   
     def wait_job_performed(limit)
       wait_while(limit) do
+        puts "wait job performed..."
         Delayed::Job.where.not(locked_at: nil).count > 0
       end
     end
@@ -37,7 +39,7 @@ class MasterTester
 
   def start
     thread = Thread.new { @master.run }
-  
+
     sleep 0.5 until @master.prepared?
 
     yield @master
