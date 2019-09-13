@@ -8,17 +8,27 @@ describe Delayed::Master::Command do
     Delayed::Master::Command.new(%w(-h)).config
   end
 
-  it 'parses daemon option' do
-    config = Delayed::Master::Command.new(%w(--daemon)).config
-    expect(config.daemon).to eq(true)
-    config = Delayed::Master::Command.new(%w(-D)).config
-    expect(config.daemon).to eq(true)
+  context 'daemon' do
+    it 'parses long option' do
+      config = Delayed::Master::Command.new(%w(--daemon)).config
+      expect(config.daemon).to eq(true)
+    end
+
+    it 'parses short option' do
+      config = Delayed::Master::Command.new(%w(-D)).config
+      expect(config.daemon).to eq(true)
+    end
   end
 
-  it 'parses config option' do
-    config = Delayed::Master::Command.new(%W(--config #{config_file})).config
-    expect(config.workers.size).to eq(3)
-    config = Delayed::Master::Command.new(%W(-c #{config_file})).config
-    expect(config.workers.size).to eq(3)
+  context 'config' do
+    it 'parses long option' do
+      config = Delayed::Master::Command.new(%W(--config #{config_file})).config
+      expect(config.workers.size).to eq(2)
+    end
+
+    it 'parses short option' do
+      config = Delayed::Master::Command.new(%W(-c #{config_file})).config
+      expect(config.workers.size).to eq(2)
+    end
   end
 end

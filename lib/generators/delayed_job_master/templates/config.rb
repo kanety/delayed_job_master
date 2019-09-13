@@ -18,9 +18,6 @@ add_worker do |worker|
   # queue name for the worker
   worker.queues %w(queue1)
 
-  # worker control (:static or :dynamic)
-  worker.control :static
-
   # worker count
   worker.count 1
 
@@ -40,7 +37,6 @@ end
 # worker2
 add_worker do |worker|
   worker.queues %w(queue2)
-  worker.control :dynamic
   worker.count 2
 end
 

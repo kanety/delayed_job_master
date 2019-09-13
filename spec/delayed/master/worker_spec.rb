@@ -1,5 +1,5 @@
 describe Delayed::Master::Worker do
-  subject(:worker) do
+  let(:worker) do
     setting = Delayed::Master::Config::WorkerSetting.new(queues: ["queue1"])
     Delayed::Master::Worker.new(1, setting)
   end

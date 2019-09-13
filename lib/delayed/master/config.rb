@@ -12,14 +12,17 @@ module Delayed
         read(file) if file
       end
 
+      def worker_settings
+        @workers
+      end
+
       def read(file)
         instance_eval(File.read(file))
       end
 
       def add_worker
-        worker = WorkerSetting.new(control: :static, count: 1)
+        worker = WorkerSetting.new(count: 1, exit_on_complete: true)
         yield worker
-        worker.exit_on_complete(true) if worker.control == :dynamic
         @workers << worker
       end
 

@@ -1,39 +1,40 @@
 describe Delayed::Worker do
-  subject(:worker) do
-    worker = Delayed::Worker.new(queues: [])
-    worker.max_memory = 1
-    worker.master_logger = Logger.new(Rails.root.join("log/delayed_job_master.log"))
-    worker
+  let(:tester) do
+    WorkerTester.new
   end
 
   before do
     Delayed::Job.delete_all
   end
 
-  def enqueue_job
-    [nil].delay(priority: 1).pop
+  it 'traps USR1 signals' do
+    tester.start do |worker|
+      tester.enqueue_timer_job(priority: 1)
+      tester.wait_job_performing
+
+      tester.kill(:USR1)
+      tester.wait_job_performed
+      expect(Delayed::Job.count).to eq(0)
+    end
   end
 
-  def start_worker_thread(worker)
-    thread = Thread.new { worker.start }
-    sleep 1
-    thread
+  it 'traps USR2 signals' do
+    tester.start do |worker|
+      tester.enqueue_timer_job(priority: 1)
+      tester.wait_job_performing
+
+      tester.kill(:USR2)
+      tester.wait_job_performed
+      expect(worker.stop?).to eq(true)
+    end
   end
 
   it 'checks memory usage' do
-    enqueue_job
-    worker.work_off
-    expect(Delayed::Job.count).to eq(0)
-  end
-
-  it 'traps signals' do
-    thread = start_worker_thread(worker)
-
-    %w(USR1 USR2).each do |signal|
-      Process.kill(signal, Process.pid)
+    tester.start do |worker|
+      worker.max_memory = 1
+      2.times { tester.enqueue_timer_job(priority: 1) }
+      tester.wait_worker_stopped
+      expect(Delayed::Job.count).to eq(1)
     end
-
-    worker.stop
-    thread.join
   end
 end

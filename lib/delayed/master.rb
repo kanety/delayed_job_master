@@ -19,7 +19,7 @@ module Delayed
       @workers = []
 
       @signal_handler = SignalHandler.new(self)
-      @worker_pool = WorkerPool.new(self, @config)
+      @worker_pool = WorkerPool.new(self)
     end
 
     def run
@@ -27,59 +27,46 @@ module Delayed
       show_config
       daemonize if @config.daemon
 
-      create_pid_file
       @logger.info "started master #{Process.pid}"
 
-      @signal_handler.register
-      @worker_pool.init
-      @worker_pool.monitor_while { stop? }
+      handle_pid_file do
+        @signal_handler.register
+        @prepared = true
+        @worker_pool.monitor_while { stop? }
+      end
 
-      remove_pid_file
       @logger.info "shut down master"
     end
 
-    def load_app
-      require File.join(@config.working_directory, 'config', 'environment')
-      require_relative 'worker/extension'
-    end
-
     def prepared?
-      @worker_pool.prepared?
+      @prepared
     end
 
     def quit
-      kill_workers
+      @signal_handler.dispatch(:KILL)
       @stop = true
     end
 
     def stop
-      @signal_handler.dispatch('TERM')
+      @signal_handler.dispatch(:TERM)
       @stop = true
     end
 
     def stop?
-      @stop
+      @stop == true
     end
 
     def reopen_files
-      @signal_handler.dispatch('USR1')
+      @signal_handler.dispatch(:USR1)
       @logger.info "reopening files..."
       Util::FileReopener.reopen
       @logger.info "reopened"
     end
 
     def restart
-      @signal_handler.dispatch('USR2')
+      @signal_handler.dispatch(:USR2)
       @logger.info "restarting master..."
       exec(*([$0] + ARGV))
-    end
-
-    def kill_workers
-      @signal_handler.dispatch('KILL')
-    end
-
-    def wait_workers
-      Process.waitall
     end
 
     private
@@ -89,6 +76,21 @@ module Delayed
       logger = Logger.new(log_file)
       logger.level = log_level
       logger
+    end
+  
+    def load_app
+      require File.join(@config.working_directory, 'config', 'environment')
+      require_relative 'worker_extension'
+    end
+
+    def daemonize
+      Process.daemon(true)
+    end
+
+    def handle_pid_file
+      create_pid_file
+      yield
+      remove_pid_file
     end
 
     def create_pid_file
@@ -100,13 +102,9 @@ module Delayed
       File.delete(@config.pid_file) if File.exist?(@config.pid_file)
     end
 
-    def daemonize
-      Process.daemon(true)
-    end
-
     def show_config
-      @config.workers.each do |setting|
-        puts "#{setting.count} worker for '#{setting.queues.join(',')}' under #{setting.control} control"
+      @config.worker_settings.each do |setting|
+        puts "#{setting.count} worker for '#{setting.queues.join(',')}'"
       end
     end
   end

@@ -27,7 +27,7 @@ add_worker do |worker|
   worker.sleep_delay 5
   worker.read_ahead 5
   worker.max_attempts 25
-  worker.max_run_time 4.hours
+  worker.max_run_time 4 * 3600
   worker.min_priority 1
   worker.max_priority 10
   worker.destroy_failed_jobs true
@@ -36,17 +36,12 @@ end
 # worker2
 add_worker do |worker|
   worker.queues %w(queue2)
-end
-
-# worker3
-add_worker do |worker|
-  worker.queues %w(dynamic)
-  worker.control :dynamic
   worker.count 2
 end
 
 before_fork do |master, worker|
   Delayed::Worker.before_fork if defined?(Delayed::Worker)
+  #ActiveRecord::Base.clear_active_connections! if defined?(ActiveRecord::Base)
 end
 
 after_fork do |master, worker|
