@@ -1,5 +1,5 @@
 require_relative 'forker'
-require_relative 'job_checker' if defined?(ActiveRecord::Base)
+require_relative 'job_checker' if defined?(Delayed::Backend::ActiveRecord)
 
 module Delayed
   class Master
