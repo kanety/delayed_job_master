@@ -8,7 +8,7 @@ class BaseTester
   end
 
   def wait_job_performing(database = :primary)
-    wait_job_performing_for(database, 16)
+    wait_job_performing_for(database, 6)
   end
 
   def wait_job_performed(database = :primary)
