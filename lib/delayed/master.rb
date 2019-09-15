@@ -2,11 +2,9 @@ require 'fileutils'
 require 'logger'
 require_relative 'master/version'
 require_relative 'master/command'
-require_relative 'master/callback'
 require_relative 'master/worker'
-require_relative 'master/worker_pool'
-require_relative 'master/signal_handler'
-require_relative 'master/job_counter'
+require_relative 'master/monitor'
+require_relative 'master/signaler'
 require_relative 'master/util/file_reopener'
 
 module Delayed
@@ -18,21 +16,20 @@ module Delayed
       @logger = setup_logger(@config.log_file, @config.log_level)
       @workers = []
 
-      @signal_handler = SignalHandler.new(self)
-      @worker_pool = WorkerPool.new(self)
+      @signaler = Signaler.new(self)
+      @monitor = Monitor.new(self)
     end
 
     def run
-      load_app
-      show_config
+      print_config
       daemonize if @config.daemon
 
       @logger.info "started master #{Process.pid}"
 
       handle_pid_file do
-        @signal_handler.register
+        @signaler.register
         @prepared = true
-        @worker_pool.monitor_while { stop? }
+        @monitor.monitor_while { stop? }
       end
 
       @logger.info "shut down master"
@@ -43,12 +40,12 @@ module Delayed
     end
 
     def quit
-      @signal_handler.dispatch(:KILL)
+      @signaler.dispatch(:KILL)
       @stop = true
     end
 
     def stop
-      @signal_handler.dispatch(:TERM)
+      @signaler.dispatch(:TERM)
       @stop = true
     end
 
@@ -57,14 +54,14 @@ module Delayed
     end
 
     def reopen_files
-      @signal_handler.dispatch(:USR1)
+      @signaler.dispatch(:USR1)
       @logger.info "reopening files..."
       Util::FileReopener.reopen
       @logger.info "reopened"
     end
 
     def restart
-      @signal_handler.dispatch(:USR2)
+      @signaler.dispatch(:USR2)
       @logger.info "restarting master..."
       exec(*([$0] + ARGV))
     end
@@ -78,11 +75,6 @@ module Delayed
       logger
     end
   
-    def load_app
-      require File.join(@config.working_directory, 'config', 'environment')
-      require_relative 'worker_extension'
-    end
-
     def daemonize
       Process.daemon(true)
     end
@@ -102,10 +94,16 @@ module Delayed
       File.delete(@config.pid_file) if File.exist?(@config.pid_file)
     end
 
-    def show_config
+    def print_config
+      print_message "databases: #{@config.databases.join(', ')}" if @config.databases
       @config.worker_settings.each do |setting|
-        puts "#{setting.count} worker for '#{setting.queues.join(',')}'"
+        print_message "worker[#{setting.id}]: #{setting.count} processes for quueue #{setting.queues.join(', ')}"
       end
+    end
+
+    def print_message(message)
+      @logger.info message
+      puts message
     end
   end
 end

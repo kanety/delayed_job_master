@@ -15,6 +15,8 @@ log_file "#{app_root}/log/delayed_job_master.log"
 # log level
 log_level :debug
 
+databases [:primary, :secondary]
+
 # worker1
 add_worker do |worker|
   # queue name for the worker

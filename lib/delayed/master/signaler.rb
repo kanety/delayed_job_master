@@ -1,6 +1,6 @@
 module Delayed
   class Master
-    class SignalHandler
+    class Signaler
       def initialize(master)
         @master = master
       end

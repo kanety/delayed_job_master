@@ -3,21 +3,23 @@
 module Delayed
   class Master
     class JobCounter
-      class << self
-        def count(setting)
-          jobs = ready_to_run(setting.max_run_time || Delayed::Worker::DEFAULT_MAX_RUN_TIME)
-          jobs.where!("priority >= ?", setting.min_priority) if setting.min_priority
-          jobs.where!("priority <= ?", setting.max_priority) if setting.max_priority
-          jobs.where!(queue: setting.queues) if setting.queues.any?
-          jobs.count
-        end
+      def initialize(klass)
+        @klass = klass
+      end
 
-        private
+      def count(setting)
+        jobs = ready_to_run(setting.max_run_time || Delayed::Worker::DEFAULT_MAX_RUN_TIME)
+        jobs.where!("priority >= ?", setting.min_priority) if setting.min_priority
+        jobs.where!("priority <= ?", setting.max_priority) if setting.max_priority
+        jobs.where!(queue: setting.queues) if setting.queues.any?
+        jobs.count
+      end
 
-        def ready_to_run(max_run_time)
-          db_time_now = Delayed::Job.db_time_now
-          Delayed::Job.where("(run_at <= ? AND (locked_at IS NULL OR locked_at < ?)) AND failed_at IS NULL", db_time_now, db_time_now - max_run_time)
-        end
+      private
+
+      def ready_to_run(max_run_time)
+        db_time_now = @klass.db_time_now
+        @klass.where("(run_at <= ? AND (locked_at IS NULL OR locked_at < ?)) AND failed_at IS NULL", db_time_now, db_time_now - max_run_time)
       end
     end
   end

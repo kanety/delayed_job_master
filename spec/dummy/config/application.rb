@@ -9,5 +9,12 @@ require 'delayed_job_active_record'
 
 module Dummy
   class Application < Rails::Application
+    config.active_job.queue_adapter = :delayed_job
+
+    if Rails::VERSION::MAJOR >= 6
+      config.paths["config/database"] = "config/database_rails6.yml"
+    else
+      config.paths["config/database"] = "config/database_rails5.yml"
+    end
   end
 end

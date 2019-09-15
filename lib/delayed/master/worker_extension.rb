@@ -4,9 +4,9 @@ module Delayed
   end
 end
 
-require_relative 'master/plugins/memory_checker'
-require_relative 'master/plugins/signal_handler'
-require_relative 'master/plugins/status_notifier'
+require_relative 'plugins/memory_checker'
+require_relative 'plugins/signal_handler'
+require_relative 'plugins/status_notifier'
 
 [
   Delayed::Master::Plugins::MemoryChecker,

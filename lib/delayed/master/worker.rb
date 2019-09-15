@@ -10,7 +10,7 @@ module Delayed
       end
 
       def title
-        titles = ["delayed_job.#{@index}"]
+        titles = ["delayed_job.#{@index}: worker[#{@setting.id}]"]
         titles << "(#{@setting.queues.join(',')})" if @setting.queues
         titles.join(' ')
       end

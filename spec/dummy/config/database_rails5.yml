@@ -14,3 +14,10 @@ test:
 production:
   <<: *default
   database: db/production.sqlite3
+
+primary:
+  <<: *default
+  database: db/test.sqlite3
+secondary:
+  <<: *default
+  database: db/test2.sqlite3

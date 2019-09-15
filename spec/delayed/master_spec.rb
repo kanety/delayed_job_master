@@ -4,13 +4,15 @@ describe Delayed::Master do
   end
 
   before do
-    Delayed::Job.delete_all
+    [DelayedJobPrimary, DelayedJobSecondary].each do |model|
+      model.delete_all
+    end
   end
 
   context 'signal' do
     it 'traps TERM' do
       tester.start do |master|
-        tester.enqueue_timer_job(queue: 'queue1', priority: 1)
+        tester.enqueue_timer_job(:primary, queue: 'queue1')
         tester.wait_job_performing
         expect(master.workers.size).to eq(1)
 
@@ -22,7 +24,7 @@ describe Delayed::Master do
 
     it 'traps INT' do
       tester.start do |master|
-        tester.enqueue_timer_job(queue: 'queue1', priority: 1)
+        tester.enqueue_timer_job(:primary, queue: 'queue1')
         tester.wait_job_performing
         expect(master.workers.size).to eq(1)
 
@@ -34,7 +36,7 @@ describe Delayed::Master do
 
     it 'traps QUIT' do
       tester.start do |master|
-        tester.enqueue_timer_job(queue: 'queue1', priority: 1)
+        tester.enqueue_timer_job(:primary, queue: 'queue1')
         tester.wait_job_performing
         expect(master.workers.size).to eq(1)
 
@@ -46,7 +48,7 @@ describe Delayed::Master do
 
     it 'traps USR1' do
       tester.start do |master|
-        tester.enqueue_timer_job(queue: 'queue1', priority: 1)
+        tester.enqueue_timer_job(:primary, queue: 'queue1')
         tester.wait_job_performing
         expect(master.workers.size).to eq(1)
 
@@ -58,7 +60,7 @@ describe Delayed::Master do
 
     it 'traps USR2' do
       tester.start do |master|
-        tester.enqueue_timer_job(queue: 'queue1', priority: 1)
+        tester.enqueue_timer_job(:primary, queue: 'queue1')
         tester.wait_job_performing
         expect(master.workers.size).to eq(1)
 
@@ -74,11 +76,11 @@ describe Delayed::Master do
     it 'runs a worker' do
       proc_title = $0
 
-      allow_any_instance_of(Delayed::Master::WorkerPool).to receive(:fork).twice { |&block| block.call }
+      allow_any_instance_of(Delayed::Master::Forker).to receive(:fork).twice { |&block| block.call }
       allow_any_instance_of(Delayed::Worker).to receive(:start).twice
 
       tester.start do |master|
-        tester.enqueue_timer_job(queue: 'queue1', priority: 1)
+        tester.enqueue_timer_job(:primary, queue: 'queue1')
         tester.wait_job_performing
         expect(master.workers.size).to eq(1)
       end
@@ -88,15 +90,31 @@ describe Delayed::Master do
 
     it 'runs multiple workers' do
       tester.start do |master|
-        tester.enqueue_timer_job(queue: 'queue1', priority: 1)
-        tester.enqueue_timer_job(queue: 'queue2', priority: 1)
-        expect(Delayed::Job.count).to eq(2)
+        tester.enqueue_timer_job(:primary, queue: 'queue1')
+        tester.enqueue_timer_job(:primary, queue: 'queue2')
         tester.wait_job_performing
         expect(master.workers.size).to eq(2)
         tester.wait_job_performed
       end
 
-      expect(Delayed::Job.count).to eq(0)
+      expect(DelayedJobPrimary.count).to eq(0)
+    end
+  end
+
+  context 'miltiple database' do
+    it 'runs workers for each database' do
+      tester.start do |master|
+        tester.enqueue_timer_job(:primary, queue: 'queue1')
+        tester.enqueue_timer_job(:secondary, queue: 'queue2')
+        tester.wait_job_performing(:primary)
+        tester.wait_job_performing(:secondary)
+        expect(master.workers.size).to eq(2)
+        tester.wait_job_performed(:primary)
+        tester.wait_job_performed(:secondary)
+      end
+
+      expect(DelayedJobPrimary.count).to eq(0)
+      expect(DelayedJobSecondary.count).to eq(0)
     end
   end
 end

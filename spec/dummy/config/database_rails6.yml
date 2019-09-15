@@ -1,0 +1,30 @@
+default: &default
+  adapter: sqlite3
+  pool: 10
+  timeout: 1000
+  idle_timeout: 1000
+  checkout_timeout: 1
+
+development:
+  primary:
+    <<: *default
+    database: db/development.sqlite3
+  secondary:
+    <<: *default
+    database: db/development2.sqlite3
+
+test:
+  primary:
+    <<: *default
+    database: db/test.sqlite3
+  secondary:
+    <<: *default
+    database: db/test2.sqlite3
+
+production:
+  primary:
+    <<: *default
+    database: db/production.sqlite3
+  secondary:
+    <<: *default
+    database: db/production2.sqlite3

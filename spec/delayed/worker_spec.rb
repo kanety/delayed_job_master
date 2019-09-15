@@ -4,23 +4,25 @@ describe Delayed::Worker do
   end
 
   before do
-    Delayed::Job.delete_all
+    [DelayedJobPrimary, DelayedJobSecondary].each do |model|
+      model.delete_all
+    end
   end
 
   it 'traps USR1 signals' do
     tester.start do |worker|
-      tester.enqueue_timer_job(priority: 1)
+      tester.enqueue_timer_job(:primary)
       tester.wait_job_performing
 
       tester.kill(:USR1)
       tester.wait_job_performed
-      expect(Delayed::Job.count).to eq(0)
+      expect(DelayedJobPrimary.count).to eq(0)
     end
   end
 
   it 'traps USR2 signals' do
     tester.start do |worker|
-      tester.enqueue_timer_job(priority: 1)
+      tester.enqueue_timer_job(:primary)
       tester.wait_job_performing
 
       tester.kill(:USR2)
@@ -32,9 +34,9 @@ describe Delayed::Worker do
   it 'checks memory usage' do
     tester.start do |worker|
       worker.max_memory = 1
-      2.times { tester.enqueue_timer_job(priority: 1) }
+      2.times { tester.enqueue_timer_job(:primary) }
       tester.wait_worker_stopped
-      expect(Delayed::Job.count).to eq(1)
+      expect(DelayedJobPrimary.count).to eq(1)
     end
   end
 end

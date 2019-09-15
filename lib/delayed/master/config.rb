@@ -1,7 +1,7 @@
 module Delayed
   class Master
     class Config
-      SIMPLE_CONFIGS   = [:working_directory, :log_file, :log_level, :pid_file, :monitor_wait, :daemon]
+      SIMPLE_CONFIGS   = [:working_directory, :log_file, :log_level, :pid_file, :monitor_wait, :daemon, :databases]
       CALLBACK_CONFIGS = [:before_fork, :after_fork, :before_monitor, :after_monitor]
 
       attr_reader :data, :workers
@@ -21,13 +21,17 @@ module Delayed
       end
 
       def add_worker
-        worker = WorkerSetting.new(count: 1, exit_on_complete: true)
+        worker = WorkerSetting.new(id: @workers.size, count: 1, exit_on_complete: true)
         yield worker
         @workers << worker
       end
 
       def callbacks
         @data.select { |k, _| CALLBACK_CONFIGS.include?(k) }
+      end
+
+      def run_callback(key, *args)
+        @data[key].call(*args)
       end
 
       SIMPLE_CONFIGS.each do |key|
@@ -51,7 +55,7 @@ module Delayed
       end
 
       class WorkerSetting
-        SIMPLE_CONFIGS = [:control, :count, :max_memory,
+        SIMPLE_CONFIGS = [:id, :count, :max_memory,
                           :min_priority, :max_priority, :sleep_delay, :read_ahead, :exit_on_complete,
                           :max_attempts, :max_run_time, :destroy_failed_jobs]
         ARRAY_CONFIGS  = [:queues]
