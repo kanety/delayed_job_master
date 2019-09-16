@@ -3,7 +3,7 @@ require_relative 'job_checker' if defined?(Delayed::Backend::ActiveRecord)
 
 module Delayed
   class Master
-    class Monitor
+    class Monitoring
       def initialize(master)
         @master = master
         @config = master.config
@@ -48,12 +48,10 @@ module Delayed
       def check_queued_jobs
         @master.logger.debug "checking jobs..."
 
-        result = @job_checker.check
-        result.each do |spec_name, settings|
-          settings.each do |setting|
-            @master.logger.info "found jobs in #{spec_name} database for worker[#{setting.id}] (#{setting.queues.join(', ')})"
-            @forker.new_worker(setting, spec_name)
-          end
+        new_workers = @job_checker.check
+        new_workers.each do |worker|
+          @master.logger.info "found jobs for #{worker.info}"
+          @forker.new_worker(worker)
         end
       end
     end

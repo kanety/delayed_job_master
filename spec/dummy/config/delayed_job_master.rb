@@ -10,7 +10,7 @@ monitor_wait 1
 pid_file "#{app_root}/tmp/pids/delayed_job_master.pid"
 
 # path to log file
-log_file "#{app_root}/log/delayed_job_master.log"
+log_file STDOUT
 
 # log level
 log_level :debug

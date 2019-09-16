@@ -1,18 +1,28 @@
 module Delayed
   class Master
     class Worker
-      attr_reader :index, :setting
+      attr_accessor :index, :setting, :database
       attr_accessor :pid, :instance
 
-      def initialize(index, setting)
-        @index = index
-        @setting = setting
+      def initialize(attrs = {})
+        attrs.each do |k, v|
+          send("#{k}=", v)
+        end
       end
 
-      def title
-        titles = ["delayed_job.#{@index}: worker[#{@setting.id}]"]
-        titles << "(#{@setting.queues.join(',')})" if @setting.queues
-        titles.join(' ')
+      def name
+        "worker[#{@setting.id}]"
+      end
+
+      def info
+        str = name
+        str << " @#{@database}" if @database
+        str << " (#{@setting.queues.join(', ')})" if @setting.queues.respond_to?(:join)
+        str
+      end
+
+      def process_title
+        "delayed_job.#{@index}: #{info}"
       end
     end
   end

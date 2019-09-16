@@ -6,24 +6,23 @@ module Delayed
         @config = master.config
       end
 
-      def new_worker(setting, spec_name)
-        worker = Delayed::Master::Worker.new(@master.workers.size, setting)
-        @master.workers << worker
+      def new_worker(worker)
+        @master.logger.info "forking #{worker.name}..."
+        fork_worker(worker)
+        @master.logger.info "forked #{worker.name} with pid #{worker.pid}"
 
-        @master.logger.info "forking worker[#{setting.id}]..."
-        fork_worker(worker, spec_name)
-        @master.logger.info "forked worker[#{setting.id}] with pid #{worker.pid}"
+        @master.workers << worker
       end
 
       private
 
-      def fork_worker(worker, spec_name)
-        @config.run_callback(:before_fork, @master, worker, spec_name)
+      def fork_worker(worker)
+        @config.run_callback(:before_fork, @master, worker)
         worker.pid = fork do
           worker.pid = Process.pid
           worker.instance = create_instance(worker)
-          @config.run_callback(:after_fork, @master, worker, spec_name)
-          $0 = worker.title
+          @config.run_callback(:after_fork, @master, worker)
+          $0 = worker.process_title
           worker.instance.start
         end
       end

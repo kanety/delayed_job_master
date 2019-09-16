@@ -3,7 +3,7 @@ require 'logger'
 require_relative 'master/version'
 require_relative 'master/command'
 require_relative 'master/worker'
-require_relative 'master/monitor'
+require_relative 'master/monitoring'
 require_relative 'master/signaler'
 require_relative 'master/util/file_reopener'
 
@@ -17,19 +17,19 @@ module Delayed
       @workers = []
 
       @signaler = Signaler.new(self)
-      @monitor = Monitor.new(self)
+      @monitoring = Monitoring.new(self)
     end
 
     def run
       print_config
       daemonize if @config.daemon
 
-      @logger.info "started master #{Process.pid}"
+      @logger.info "started master #{Process.pid}".tap { |msg| puts msg }
 
       handle_pid_file do
         @signaler.register
         @prepared = true
-        @monitor.monitor_while { stop? }
+        @monitoring.monitor_while { stop? }
       end
 
       @logger.info "shut down master"
@@ -69,7 +69,7 @@ module Delayed
     private
 
     def setup_logger(log_file, log_level)
-      FileUtils.mkdir_p(File.dirname(log_file))
+      FileUtils.mkdir_p(File.dirname(log_file)) if log_file.is_a?(String)
       logger = Logger.new(log_file)
       logger.level = log_level
       logger
@@ -95,15 +95,12 @@ module Delayed
     end
 
     def print_config
-      print_message "databases: #{@config.databases.join(', ')}" if @config.databases
+      @logger.info "databases: #{@config.databases.join(', ')}" if @config.databases
       @config.worker_settings.each do |setting|
-        print_message "worker[#{setting.id}]: #{setting.count} processes for quueue #{setting.queues.join(', ')}"
+        message = "worker[#{setting.id}]: #{setting.count} processes"
+        message << " (#{setting.queues.join(', ')})" if setting.queues.respond_to?(:join)
+        @logger.info message
       end
-    end
-
-    def print_message(message)
-      @logger.info message
-      puts message
     end
   end
 end

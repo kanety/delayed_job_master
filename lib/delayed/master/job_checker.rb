@@ -13,20 +13,22 @@ module Delayed
       end
 
       def check
-        result = {}
+        workers = []
+        mon = Monitor.new
 
         threads = @spec_names.map do |spec_name|
           Thread.new(spec_name) do |spec_name|
             find_jobs_in_db(spec_name) do |setting|
-              result[spec_name] ||= []
-              result[spec_name] << setting
+              mon.synchronize do
+                workers << Worker.new(index: @master.workers.size + workers.size, database: spec_name, setting: setting)
+              end
             end
           end
         end
 
         threads.each(&:join)
 
-        result
+        workers
       end
 
       private
@@ -48,9 +50,11 @@ module Delayed
 
       def extend_after_fork_callback
         prc = @config.after_fork
-        @config.after_fork do |master, worker, spec_name|
-          prc.call(master, worker, spec_name)
-          ActiveRecord::Base.establish_connection(spec_name) if spec_name
+        @config.after_fork do |master, worker|
+          prc.call(master, worker)
+          if worker.database && ActiveRecord::Base.connection_pool.spec.name != worker.database.to_s
+            ActiveRecord::Base.establish_connection(worker.database)
+          end
         end
       end
 
