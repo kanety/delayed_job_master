@@ -17,7 +17,7 @@ module Delayed
       end
 
       def read(file)
-        instance_eval(File.read(file))
+        instance_eval(File.read(file), file)
       end
 
       def add_worker
@@ -64,6 +64,10 @@ module Delayed
 
         def initialize(default = {})
           @data = default
+        end
+
+        def control(value = nil)
+          puts "DEPRECATION WARNING: deprecated control setting is called from #{caller(1, 1).first}. Remove it from your config file."
         end
 
         SIMPLE_CONFIGS.each do |key|
