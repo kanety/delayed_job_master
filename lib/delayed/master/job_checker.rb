@@ -37,7 +37,7 @@ module Delayed
         @spec_names.each do |spec_name|
           klass = Class.new(Delayed::Job)
           klass_name = "DelayedJob#{spec_name.capitalize}"
-          unless defined? klass_name
+          unless Delayed::Master.const_defined?(klass_name)
             Delayed::Master.const_set(klass_name, klass)
             Delayed::Master.const_get(klass_name).establish_connection(spec_name)
           end
