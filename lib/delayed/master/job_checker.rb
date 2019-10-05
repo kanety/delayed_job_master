@@ -60,7 +60,7 @@ module Delayed
 
       def target_spec_names
         if @config.databases.nil? || @config.databases.empty?
-          load_spec_names
+          load_spec_names.select { |spec_name| has_delayed_job_table?(spec_name) }
         else
           @config.databases
         end
@@ -70,8 +70,13 @@ module Delayed
         if Rails::VERSION::MAJOR >= 6
           ActiveRecord::Base.configurations.configs_for(env_name: Rails.env).map { |c| c.spec_name.to_sym }
         else
-          Rails.env.to_sym
+          [Rails.env.to_sym]
         end
+      end
+
+      def has_delayed_job_table?(spec_name)
+        ActiveRecord::Base.establish_connection(spec_name)
+        ActiveRecord::Base.connection.tables.include?('delayed_jobs')
       end
 
       def find_jobs_in_db(spec_name)
