@@ -68,7 +68,8 @@ module Delayed
 
       def load_spec_names
         if Rails::VERSION::MAJOR >= 6
-          ActiveRecord::Base.configurations.configs_for(env_name: Rails.env).map { |c| c.spec_name.to_sym }
+          configs = ActiveRecord::Base.configurations.configs_for(env_name: Rails.env)
+          configs.reject(&:replica?).map { |c| c.spec_name.to_sym }
         else
           [Rails.env.to_sym]
         end

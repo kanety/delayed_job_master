@@ -12,6 +12,14 @@ development:
   secondary:
     <<: *default
     database: db/development2.sqlite3
+  primary_replica:
+    <<: *default
+    database: db/development.sqlite3
+    replica: true
+  secondary_replica:
+    <<: *default
+    database: db/development2.sqlite3
+    replica: true
 
 test:
   primary:
@@ -20,6 +28,14 @@ test:
   secondary:
     <<: *default
     database: db/test2.sqlite3
+  primary_replica:
+    <<: *default
+    database: db/test.sqlite3
+    replica: true
+  secondary_replica:
+    <<: *default
+    database: db/test2.sqlite3
+    replica: true
 
 production:
   primary:
@@ -28,3 +44,11 @@ production:
   secondary:
     <<: *default
     database: db/production2.sqlite3
+  primary_replica:
+    <<: *default
+    database: db/production.sqlite3
+    replica: true
+  secondary_replica:
+    <<: *default
+    database: db/production2.sqlite3
+    replica: true
