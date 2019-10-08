@@ -5,11 +5,9 @@ A simple delayed_job master process to control multiple workers.
 ## Features
 
 * Preload application and fork workers fastly.
-* Monitor workers and fork new workers if necessary.
-* Restart workers with memory limitation.
-* Trap USR1 signal to reopen log files.
-* Trap USR2 signal to restart master and workers.
-* Auto-scale worker processes.
+* Monitor job queues and fork new workers on demand.
+* Trap signals to restart / reopen log files.
+* Support multiple databases.
 
 ## Dependencies
 
@@ -32,11 +30,11 @@ And then execute:
 
     $ bundle
 
-Create config files:
+## Generate files
+
+Generate `bin/delayed_job_master` and `config/delayed_job_master.rb`:
 
     $ rails generate delayed_job_master:config
-
-This command creates `bin/delayed_job_master` and `config/delayed_job_master.rb`.
 
 ## Configuration
 
@@ -58,13 +56,13 @@ log_file "#{Dir.pwd}/log/delayed_job_master.log"
 # log level
 log_level :info
 
+# databases for checking queued jobs if you have multiple databases
+# databases [:production]
+
 # worker1
 add_worker do |worker|
   # queue name for the worker
   worker.queues %w(queue1)
-
-  # worker control (:static or :dynamic)
-  worker.control :static
 
   # worker count
   worker.count 1
@@ -85,7 +83,6 @@ end
 # worker2
 add_worker do |worker|
   worker.queues %w(queue2)
-  worker.control :dynamic
   worker.count 2
 end
 
@@ -145,19 +142,19 @@ Workers handle each signal as follows:
 
 ```
 $ ps aux
-... delayed_job.0 (queue1) [BUSY]  # BUSY process is currently proceeding some jobs
+... delayed_job.0: worker[0] (queue1) [BUSY]  # BUSY process is currently proceeding some jobs
 ```
 
 After graceful restart, you may find OLD process.
 
 ```
 $ ps aux
-... delayed_job.0 (queue1) [BUSY] [OLD]  # OLD process will stop after finishing current jobs.
+... delayed_job.0: worker[0] (queue1) [BUSY] [OLD]  # OLD process will stop after finishing current jobs.
 ```
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/kanety/delayed_job_master. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
+Bug reports and pull requests are welcome on GitHub at https://github.com/kanety/delayed_job_master.
 
 ## License
 

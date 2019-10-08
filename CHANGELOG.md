@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 2.0.0
+
+* Support multiple databases.
+* Logging memory usage.
+* Remove static worker support.
+* Remove mongoid support.
+
 ## 1.2.0
 
 * Add destroy_failed_jobs for worker.
