@@ -6,7 +6,7 @@ module Delayed
           def reopen
             ObjectSpace.each_object(File) do |file|
               next if file.closed? || !file.sync
-              file.reopen file.path 
+              file.reopen file.path, 'a+'
               file.sync = true
               file.flush
             end
