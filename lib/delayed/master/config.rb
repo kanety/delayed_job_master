@@ -21,7 +21,7 @@ module Delayed
       end
 
       def add_worker
-        worker = WorkerSetting.new(id: @workers.size, count: 1, exit_on_complete: true)
+        worker = WorkerSetting.new(id: @workers.size, queues: [], count: 1, exit_on_complete: true)
         yield worker
         @workers << worker
       end
