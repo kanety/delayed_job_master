@@ -72,7 +72,7 @@ module Delayed
 
         SIMPLE_CONFIGS.each do |key|
           define_method(key) do |value = nil|
-            if value
+            if !value.nil?
               @data[key] = value
             else
               @data[key]
