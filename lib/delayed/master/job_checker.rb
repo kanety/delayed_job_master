@@ -52,9 +52,7 @@ module Delayed
         prc = @config.after_fork
         @config.after_fork do |master, worker|
           prc.call(master, worker)
-          if worker.database && ActiveRecord::Base.connection_pool.spec.name != worker.database.to_s
-            ActiveRecord::Base.establish_connection(worker.database)
-          end
+          ActiveRecord::Base.establish_connection(worker.database) if worker.database
         end
       end
 
