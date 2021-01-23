@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2.0.2
+
+* Force establish_connection after fork.
+
 ## 2.0.1
 
 * Force file reopen mode to `a+`.
