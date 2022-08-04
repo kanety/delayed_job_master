@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2.0.3
+
+* Fix database config detection for rails 7.0.
+
 ## 2.0.2
 
 * Force establish_connection after fork.
