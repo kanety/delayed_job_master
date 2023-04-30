@@ -4,6 +4,11 @@ default: &default
   timeout: 1000
   checkout_timeout: 1
 
+ci: &ci
+  host: localhost
+  username: <%= ENV['POSTGRES_USER'] %>
+  password: <%= ENV['POSTGRES_PASSWORD'] %>
+
 development:
   primary:
     <<: *default
@@ -23,16 +28,20 @@ development:
 test:
   primary:
     <<: *default
+    <<: *ci
     database: djm_test
   secondary:
     <<: *default
+    <<: *ci
     database: djm_test2
   primary_replica:
     <<: *default
+    <<: *ci
     database: djm_test
     replica: true
   secondary_replica:
     <<: *default
+    <<: *ci
     database: djm_test2
     replica: true
 

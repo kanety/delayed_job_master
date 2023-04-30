@@ -1,4 +1,4 @@
-return if ENV['DATABASE_CONFIG'] != 'multiple'
+return if ENV['DATABASE_CONFIG'] != 'multi'
 
 describe Delayed::Master do
   let(:tester) do

@@ -4,12 +4,18 @@ default: &default
   timeout: 1000
   checkout_timeout: 1
 
+ci: &ci
+  host: localhost
+  username: <%= ENV['POSTGRES_USER'] %>
+  password: <%= ENV['POSTGRES_PASSWORD'] %>
+
 development:
   <<: *default
   database: djm_development
 
 test:
   <<: *default
+  <<: *ci
   database: djm_test
 
 production:

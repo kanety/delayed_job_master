@@ -1,11 +1,9 @@
 /.bundle/
-/.project
 /Gemfile.lock
 /gemfiles/*gemfile.lock
 /coverage/
 /pkg/
 /spec/reports/
-/spec/**/db/*.sqlite3
 /spec/**/log/*.log
 /spec/**/tmp/*
 /vendor/

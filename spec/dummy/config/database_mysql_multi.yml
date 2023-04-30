@@ -1,8 +1,15 @@
 default: &default
-  adapter: postgresql
+  adapter: mysql2
   pool: 100
   timeout: 1000
   checkout_timeout: 1
+  charset: utf8mb4
+  collation: utf8mb4_bin
+  encoding: utf8mb4
+
+ci: &ci
+  host: 127.0.0.1
+  username: root
 
 development:
   primary:
@@ -23,16 +30,20 @@ development:
 test:
   primary:
     <<: *default
+    <<: *ci
     database: djm_test
   secondary:
     <<: *default
+    <<: *ci
     database: djm_test2
   primary_replica:
     <<: *default
+    <<: *ci
     database: djm_test
     replica: true
   secondary_replica:
     <<: *default
+    <<: *ci
     database: djm_test2
     replica: true
 

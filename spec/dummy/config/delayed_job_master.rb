@@ -15,7 +15,7 @@ log_file STDOUT
 # log level
 log_level :debug
 
-if ENV['DATABASE_CONFIG'] == 'multiple'
+if ENV['DATABASE_CONFIG'] == 'multi'
   databases [:primary, :secondary]
 end
 

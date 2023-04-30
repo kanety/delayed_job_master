@@ -7,4 +7,5 @@ require 'active_support/all'
 require 'delayed_job_active_record'
 require 'delayed_job_master'
 
+require_relative 'delayed_job_active_record_helper'
 require_relative 'delayed_job_master_helper'

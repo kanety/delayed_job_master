@@ -27,6 +27,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake"
   spec.add_development_dependency "rspec-rails"
   spec.add_development_dependency "simplecov"
-  spec.add_development_dependency "sqlite3"
+  spec.add_development_dependency "pg"
+  spec.add_development_dependency "mysql2"
   spec.add_development_dependency "delayed_job_active_record", ">= 4.1"
 end

@@ -11,10 +11,8 @@ module Dummy
   class Application < Rails::Application
     config.active_job.queue_adapter = :delayed_job
 
-    if ENV['DATABASE_CONFIG'] == 'multiple'
-      config.paths["config/database"] = "config/database_multi.yml"
-    else
-      config.paths["config/database"] = "config/database.yml"
-    end
+    database = ENV['DATABASE'] ? "database_#{ENV['DATABASE']}" : "database"
+    database << "_multi" if ENV['DATABASE_CONFIG'] == 'multi'
+    config.paths["config/database"] = "config/#{database}.yml"
   end
 end
