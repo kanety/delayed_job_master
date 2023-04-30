@@ -18,12 +18,12 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.required_ruby_version = '>= 2.3'
+  spec.required_ruby_version = '>= 2.7'
 
   spec.add_dependency "delayed_job", ">= 4.1"
   spec.add_dependency "get_process_mem"
 
-  spec.add_development_dependency "rails"
+  spec.add_development_dependency "rails", ">= 6.0"
   spec.add_development_dependency "rake"
   spec.add_development_dependency "rspec-rails"
   spec.add_development_dependency "simplecov"

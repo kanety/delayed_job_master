@@ -1,5 +1,5 @@
 class BaseTester
-  def enqueue_timer_job(database = :primary, options = {})
+  def enqueue_timer_job(database = nil, **options)
     options[:priority] ||= 1
     job = TimerJob.new(3)
     delayed_job_klass(database) do |klass|
@@ -7,12 +7,12 @@ class BaseTester
     end
   end
 
-  def wait_job_performing(database = :primary)
-    wait_job_performing_for(database, 6)
+  def wait_job_performing(database = nil)
+    wait_job_performing_for(database, 10)
   end
 
-  def wait_job_performed(database = :primary)
-    wait_job_performed_for(database, 6)
+  def wait_job_performed(database = nil)
+    wait_job_performed_for(database, 10)
   end
 
   def kill(signal)
@@ -21,8 +21,12 @@ class BaseTester
 
   private
 
-  def delayed_job_klass(database)
-    yield "DelayedJob#{database.capitalize}".constantize
+  def delayed_job_klass(database = nil)
+    if database
+      yield "DelayedJob#{database.capitalize}".constantize
+    else
+      yield Delayed::Job
+    end
   end
 
   def wait_job_performing_for(database, limit)

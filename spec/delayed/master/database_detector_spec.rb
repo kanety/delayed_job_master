@@ -5,10 +5,10 @@ describe Delayed::Master::DatabaseDetector do
 
   it 'detects databases with delayed_jobs' do
     spec_names = detector.call
-    if Rails::VERSION::MAJOR >= 6
+    if ENV['DATABASE_CONFIG'] == 'multiple'
       expect(spec_names).to eq([:primary, :secondary])
     else
-      expect(spec_names).to eq([Rails.env.to_sym])
+      expect(spec_names).to eq([:primary])
     end
   end
 end

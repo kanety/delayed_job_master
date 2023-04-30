@@ -15,7 +15,9 @@ log_file STDOUT
 # log level
 log_level :debug
 
-databases [:primary, :secondary]
+if ENV['DATABASE_CONFIG'] == 'multiple'
+  databases [:primary, :secondary]
+end
 
 # worker1
 add_worker do |worker|

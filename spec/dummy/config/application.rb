@@ -11,10 +11,10 @@ module Dummy
   class Application < Rails::Application
     config.active_job.queue_adapter = :delayed_job
 
-    if Rails::VERSION::MAJOR >= 6
-      config.paths["config/database"] = "config/database_rails6.yml"
+    if ENV['DATABASE_CONFIG'] == 'multiple'
+      config.paths["config/database"] = "config/database_multi.yml"
     else
-      config.paths["config/database"] = "config/database_rails5.yml"
+      config.paths["config/database"] = "config/database.yml"
     end
   end
 end
