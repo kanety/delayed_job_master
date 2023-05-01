@@ -21,7 +21,8 @@ describe Delayed::Master::Config do
       end
       expect(config.worker_settings.size).to eq(1)
       expect(config.worker_settings[0].queues).to eq([])
-      expect(config.worker_settings[0].count).to eq(1)
+      expect(config.worker_settings[0].max_processes).to eq(1)
+      expect(config.worker_settings[0].max_threads).to eq(1)
     end
 
     it 'sets an array value' do

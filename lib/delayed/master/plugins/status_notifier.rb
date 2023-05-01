@@ -3,7 +3,7 @@ module Delayed
     module Plugins
       class StatusNotifier < Delayed::Plugin
         callbacks do |lifecycle|
-          lifecycle.around(:perform) do |worker, job, &block|
+          lifecycle.around(:execute) do |worker, job, &block|
             title = $0
             $0 = "#{title} [BUSY]"
             ret = block.call

@@ -1,7 +1,7 @@
 class BaseTester
   def enqueue_timer_job(database = nil, **options)
     options[:priority] ||= 1
-    job = TimerJob.new(3)
+    job = TimerJob.new(2)
     delayed_job_klass(database) do |klass|
       klass.enqueue(ActiveJob::QueueAdapters::DelayedJobAdapter::JobWrapper.new(job.serialize), options)
     end
@@ -83,7 +83,11 @@ class WorkerTester < BaseTester
     @worker.master_logger = Logger.new(Rails.root.join("log/delayed_job_master.log"))
   end
 
-  def start
+  def start(options = {})
+    options.each do |key , val|
+      @worker.send("#{key}=", val)
+    end
+
     thread = Thread.new do
       @worker.start
     end

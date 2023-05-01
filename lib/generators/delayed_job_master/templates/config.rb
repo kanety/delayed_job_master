@@ -18,9 +18,12 @@ add_worker do |worker|
   # queue name for the worker
   worker.queues %w(queue1)
 
-  # worker count
-  worker.count 1
+  # max process count
+  worker.max_processes 1
 
+  # max thread count for each worker
+  worker.max_threads 1
+  
   # max memory in MB
   worker.max_memory 300
 
@@ -37,7 +40,8 @@ end
 # worker2
 add_worker do |worker|
   worker.queues %w(queue2)
-  worker.count 2
+  worker.max_processes 2
+  worker.max_threads 2
 end
 
 before_fork do |master, worker|

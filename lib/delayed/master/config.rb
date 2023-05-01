@@ -21,7 +21,7 @@ module Delayed
       end
 
       def add_worker
-        worker = WorkerSetting.new(id: @workers.size, queues: [], count: 1, exit_on_complete: true)
+        worker = WorkerSetting.new(id: @workers.size)
         yield worker
         @workers << worker
       end
@@ -55,19 +55,29 @@ module Delayed
       end
 
       class WorkerSetting
-        SIMPLE_CONFIGS = [:id, :count, :max_memory,
+        SIMPLE_CONFIGS = [:id, :max_processes, :max_threads, :max_memory,
                           :min_priority, :max_priority, :sleep_delay, :read_ahead, :exit_on_complete,
                           :max_attempts, :max_run_time, :destroy_failed_jobs]
         ARRAY_CONFIGS  = [:queues]
 
         attr_reader :data
 
-        def initialize(default = {})
-          @data = default
+        def initialize(attrs = {})
+          @data = {
+            queues: [],
+            max_processes: 1,
+            max_threads: 1,
+            exit_on_complete: true
+          }.merge(attrs)
+        end
+        
+        def control(value = nil)
+          puts "DEPRECATION WARNING: deprecated control setting was called from #{caller(1, 1).first}. Remove it from your config file."
         end
 
-        def control(value = nil)
-          puts "DEPRECATION WARNING: deprecated control setting is called from #{caller(1, 1).first}. Remove it from your config file."
+        def count(value = nil)
+          puts "DEPRECATION WARNING: deprecated count setting was called from #{caller(1, 1).first}. Use max_processes instead."
+          max_processes value
         end
 
         SIMPLE_CONFIGS.each do |key|

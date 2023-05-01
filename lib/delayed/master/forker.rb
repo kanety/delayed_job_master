@@ -36,7 +36,7 @@ module Delayed
             Delayed::Worker.send("#{key}=", value)
           end
         end
-        [:max_memory].each do |key|
+        [:max_threads, :max_memory].each do |key|
           if (value = worker.setting.send(key))
             instance.send("#{key}=", value)
           end
