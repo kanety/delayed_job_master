@@ -1,4 +1,4 @@
-require_relative 'job_counter'
+require_relative 'job_finder'
 require_relative 'database_detector'
 
 module Delayed
@@ -66,13 +66,13 @@ module Delayed
       end
 
       def find_jobs_in_db(spec_name)
-        counter = JobCounter.new(model_for(spec_name))
+        finder = JobFinder.new(model_for(spec_name))
 
         @config.worker_settings.each do |setting|
           count = @master.workers.count { |worker| worker.setting.queues == setting.queues }
           slot = setting.max_processes - count
-          if slot > 0 && (job_count = counter.count(setting)) > 0
-            [slot, job_count].min.times do
+          if slot > 0 && (job_ids = finder.call(setting).limit(slot).pluck(:id)).size > 0
+            [slot, job_ids.size].min.times do
               yield setting
             end
           end
