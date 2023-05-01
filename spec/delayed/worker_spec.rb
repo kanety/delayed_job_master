@@ -31,7 +31,7 @@ describe Delayed::Worker do
 
   it 'checks memory usage' do
     tester.start(max_memory: 1) do |worker|
-      2.times { tester.enqueue_timer_job }
+      tester.enqueue_timer_job(count: 2)
       tester.wait_job_performing
       tester.wait_worker_stopped
       expect(Delayed::Job.count).to eq(1)
@@ -40,7 +40,7 @@ describe Delayed::Worker do
 
   it 'works multithread' do
     tester.start(max_threads: 2) do |worker|
-      2.times { tester.enqueue_timer_job }
+      tester.enqueue_timer_job(count: 2)
       tester.wait_job_performing
       tester.wait_job_performed
       expect(Delayed::Job.count).to eq(0)

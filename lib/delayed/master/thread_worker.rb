@@ -3,50 +3,50 @@
 module Delayed
   class Master
     module ThreadWorker
-      def name
-        if multi_thread?
-          @_prefix_name ||= "#{@name_prefix}host:#{Socket.gethostname} pid:#{Process.pid}" rescue "#{@name_prefix}pid:#{Process.pid}"
-          "#{@_prefix_name} tid:#{Thread.current.object_id}"
-        else
-          super
-        end
-      end
-
       def work_off(num = 100)
-        if multi_thread?
-          work_off_multi_thread
+        if multithread?
+          work_off_for_multithread
         else
           super
         end
       end
 
-      def multi_thread?
+      def multithread?
         @max_threads.to_i > 1
       end
 
-      def work_off_multi_thread
+      def work_off_for_multithread
         success = 0
         failure = 0
 
         monitor = Monitor.new
         thread_pool = ThreadPool.new(@max_threads)
 
-        thread_pool.start do
-          case reserve_and_run_one_job
+        thread_pool.schedule do
+          if stop?
+            next nil
+          else
+            next reserve_job
+          end
+        end
+
+        thread_pool.work do |job|
+          case run_one_job(job)
           when true
             monitor.synchronize { success += 1 }
           when false
             monitor.synchronize { failure += 1 }
-          else
-            next :exit
           end
-          next :exit if stop?
         end
 
         thread_pool.wait
         thread_pool.shutdown
 
         [success, failure]
+      end
+
+      def run_one_job(job)
+        self.class.lifecycle.run_callbacks(:perform, self, job) { run(job) }
       end
     end
   end

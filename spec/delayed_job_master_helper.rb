@@ -1,9 +1,14 @@
 class BaseTester
   def enqueue_timer_job(database = nil, **options)
     options[:priority] ||= 1
-    job = TimerJob.new(2)
     delayed_job_klass(database) do |klass|
-      klass.enqueue(ActiveJob::QueueAdapters::DelayedJobAdapter::JobWrapper.new(job.serialize), options)
+      klass.transaction do
+        count = options.delete(:count) || 1
+        count.times do
+          job = TimerJob.new(2)
+          klass.enqueue(ActiveJob::QueueAdapters::DelayedJobAdapter::JobWrapper.new(job.serialize), options)
+        end
+      end
     end
   end
 
@@ -92,8 +97,6 @@ class WorkerTester < BaseTester
       @worker.start
     end
 
-    sleep 1
-
     yield @worker
 
     @worker.stop
@@ -102,6 +105,7 @@ class WorkerTester < BaseTester
 
   def wait_worker_stopped
     wait_while(6) do
+      puts "wait worker stopped..."
       !@worker.stop?
     end
   end

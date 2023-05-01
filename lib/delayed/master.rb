@@ -6,6 +6,7 @@ require_relative 'master/worker'
 require_relative 'master/monitoring'
 require_relative 'master/signaler'
 require_relative 'master/util/file_reopener'
+require_relative 'backend/active_record_fix'
 
 module Delayed
   class Master
