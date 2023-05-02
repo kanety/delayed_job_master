@@ -18,10 +18,10 @@ describe Delayed::Master::JobFinder do
   it 'benchmarks' do
     Benchmark.bmbm do |r|
       r.report 'count' do
-        100.times { job_finder.call(setting).count }
+        100.times { job_finder.count(setting) }
       end
       r.report 'limit' do
-        100.times { job_finder.call(setting).limit(1).pluck(:id) }
+        100.times { job_finder.call(setting, 1) }
       end
     end
   end

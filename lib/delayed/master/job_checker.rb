@@ -73,7 +73,7 @@ module Delayed
         @config.worker_settings.each do |setting|
           count = @master.workers.count { |worker| worker.setting.queues == setting.queues }
           slot = setting.max_processes - count
-          if slot > 0 && (job_ids = finder.call(setting).limit(slot).pluck(:id)).size > 0
+          if slot > 0 && (job_ids = finder.call(setting, slot)).size > 0
             [slot, job_ids.size].min.times do
               yield setting
             end
