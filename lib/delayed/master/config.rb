@@ -14,6 +14,7 @@ module Delayed
 
       def initialize(file = nil)
         @workers = []
+        CALLBACK_CONFIGS.each { |key| send("#{key}=", []) }
         read(file) if file
       end
 
@@ -32,14 +33,10 @@ module Delayed
         worker
       end
 
-      def run_callback(key, *args)
-        send(key)&.call(*args)
-      end
-
       SIMPLE_CONFIGS.each do |key|
         define_method(key) do |*args|
           if args.size > 0
-            send("#{key}=", args[0])
+            instance_variable_set("@#{key}", args[0])
           else
             instance_variable_get("@#{key}")
           end
@@ -49,7 +46,7 @@ module Delayed
       CALLBACK_CONFIGS.each do |key|
         define_method(key) do |&block|
           if block
-            send("#{key}=", block)
+            instance_variable_get("@#{key}") << block
           else
             instance_variable_get("@#{key}")
           end

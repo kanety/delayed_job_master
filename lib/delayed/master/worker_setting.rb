@@ -28,7 +28,7 @@ module Delayed
       SIMPLE_CONFIGS.each do |key|
         define_method(key) do |*args|
           if args.size > 0
-            send("#{key}=", args[0])
+            instance_variable_set("@#{key}", args[0])
           else
             instance_variable_get("@#{key}")
           end
@@ -38,7 +38,7 @@ module Delayed
       ARRAY_CONFIGS.each do |key|
         define_method(key) do |*args|
           if args.size > 0
-            send("#{key}=", Array(args[0]))
+            instance_variable_set("@#{key}", Array(args[0]))
           else
             instance_variable_get("@#{key}")
           end

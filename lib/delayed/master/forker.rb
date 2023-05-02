@@ -9,11 +9,11 @@ module Delayed
       end
 
       def call(worker)
-        @config.run_callback(:before_fork, @master, worker)
+        @master.run_callbacks(:before_fork, worker)
         worker.pid = fork do
           worker.pid = Process.pid
           worker.instance = create_instance(worker)
-          @config.run_callback(:after_fork, @master, worker)
+          @master.run_callbacks(:after_fork, worker)
           $0 = worker.process_title
           worker.instance.start
         end

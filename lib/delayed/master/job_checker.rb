@@ -52,9 +52,7 @@ module Delayed
       end
 
       def extend_after_fork_callback
-        prc = @config.after_fork
         @config.after_fork do |master, worker|
-          prc.call(master, worker)
           ActiveRecord::Base.establish_connection(worker.database) if worker.database
         end
       end

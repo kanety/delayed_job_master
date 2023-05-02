@@ -27,9 +27,9 @@ module Delayed
       private
 
       def monitor
-        @config.run_callback(:before_monitor, @master)
+        @master.run_callbacks(:before_monitor)
         yield
-        @config.run_callback(:after_monitor, @master)
+        @master.run_callbacks(:after_monitor)
       rescue Exception => e
         @master.logger.warn "#{e.class}: #{e.message} at #{__FILE__}: #{__LINE__}"
       end

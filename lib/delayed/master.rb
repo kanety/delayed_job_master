@@ -68,6 +68,10 @@ module Delayed
       exec(*([$0] + ARGV))
     end
 
+    def run_callbacks(key, *args)
+      @config.send(key)&.to_a.each { |callback| callback.call(*([self] +args)) }
+    end
+
     private
 
     def setup_logger(log_file, log_level)
