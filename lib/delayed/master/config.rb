@@ -24,8 +24,9 @@ module Delayed
 
       def add_worker
         worker = WorkerSetting.new(id: @workers.size)
-        yield worker
+        yield worker if block_given?
         @workers << worker
+        worker
       end
 
       def callbacks
