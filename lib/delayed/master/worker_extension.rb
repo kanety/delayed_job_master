@@ -3,7 +3,7 @@
 require_relative 'thread_pool'
 require_relative 'thread_worker'
 require_relative 'plugins/all'
-require_relative 'backend/active_record'
+require_relative 'backend/active_record' if defined?(Delayed::Backend::ActiveRecord)
 
 module Delayed
   class Worker
