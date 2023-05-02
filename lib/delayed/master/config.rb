@@ -1,25 +1,28 @@
 # frozen_string_literal: true
 
+require_relative 'worker_setting'
+
 module Delayed
   class Master
     class Config
       SIMPLE_CONFIGS   = [:working_directory, :log_file, :log_level, :pid_file, :monitor_wait, :daemon, :databases]
       CALLBACK_CONFIGS = [:before_fork, :after_fork, :before_monitor, :after_monitor]
 
-      attr_reader :data, :workers
+      attr_accessor *SIMPLE_CONFIGS
+      attr_accessor *CALLBACK_CONFIGS
+      attr_reader :workers
 
       def initialize(file = nil)
-        @data = {}
         @workers = []
         read(file) if file
       end
 
-      def worker_settings
-        @workers
-      end
-
       def read(file)
         instance_eval(File.read(file), file)
+      end
+
+      def worker_settings
+        @workers
       end
 
       def add_worker
@@ -29,20 +32,16 @@ module Delayed
         worker
       end
 
-      def callbacks
-        @data.select { |k, _| CALLBACK_CONFIGS.include?(k) }
-      end
-
       def run_callback(key, *args)
-        @data[key].call(*args)
+        send(key)&.call(*args)
       end
 
       SIMPLE_CONFIGS.each do |key|
-        define_method(key) do |value = nil|
-          if !value.nil?
-            @data[key] = value
+        define_method(key) do |*args|
+          if args.size > 0
+            send("#{key}=", args[0])
           else
-            @data[key]
+            instance_variable_get("@#{key}")
           end
         end
       end
@@ -50,56 +49,9 @@ module Delayed
       CALLBACK_CONFIGS.each do |key|
         define_method(key) do |&block|
           if block
-            @data[key] = block
+            send("#{key}=", block)
           else
-            @data[key]
-          end
-        end
-      end
-
-      class WorkerSetting
-        SIMPLE_CONFIGS = [:id, :max_processes, :max_threads, :max_memory,
-                          :min_priority, :max_priority, :sleep_delay, :read_ahead, :exit_on_complete,
-                          :max_attempts, :max_run_time, :destroy_failed_jobs]
-        ARRAY_CONFIGS  = [:queues]
-
-        attr_reader :data
-
-        def initialize(attrs = {})
-          @data = {
-            queues: [],
-            max_processes: 1,
-            max_threads: 1,
-            exit_on_complete: true
-          }.merge(attrs)
-        end
-        
-        def control(value = nil)
-          puts "DEPRECATION WARNING: deprecated control setting was called from #{caller(1, 1).first}. Remove it from your config file."
-        end
-
-        def count(value = nil)
-          puts "DEPRECATION WARNING: deprecated count setting was called from #{caller(1, 1).first}. Use max_processes instead."
-          max_processes value
-        end
-
-        SIMPLE_CONFIGS.each do |key|
-          define_method(key) do |value = nil|
-            if !value.nil?
-              @data[key] = value
-            else
-              @data[key]
-            end
-          end
-        end
-
-        ARRAY_CONFIGS.each do |key|
-          define_method(key) do |value = nil|
-            if value
-              @data[key] = Array(value)
-            else
-              @data[key]
-            end
+            instance_variable_get("@#{key}")
           end
         end
       end

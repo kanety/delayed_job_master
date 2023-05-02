@@ -1,6 +1,6 @@
 describe Delayed::Master::Worker do
   let(:worker) do
-    setting = Delayed::Master::Config::WorkerSetting.new(id: 0, queues: ["queue1"])
+    setting = Delayed::Master::WorkerSetting.new(id: 0, queues: ["queue1"])
     Delayed::Master::Worker.new(index: 1, setting: setting)
   end
 

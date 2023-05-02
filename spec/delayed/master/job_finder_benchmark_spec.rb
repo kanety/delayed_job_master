@@ -4,7 +4,7 @@ describe Delayed::Master::JobFinder do
   end
 
   let(:setting) do
-    Delayed::Master::Config::WorkerSetting.new(queue: %w(queue1))
+    Delayed::Master::WorkerSetting.new(queues: %w(queue1))
   end
 
   before do

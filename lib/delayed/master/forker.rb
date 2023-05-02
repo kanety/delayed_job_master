@@ -32,13 +32,14 @@ module Delayed
       def create_instance(worker)
         require_relative 'worker_extension'
 
-        instance = Delayed::Worker.new(worker.setting.data)
+        instance = Delayed::Worker.new
         [:max_run_time, :max_attempts, :destroy_failed_jobs].each do |key|
           if (value = worker.setting.send(key))
             Delayed::Worker.send("#{key}=", value)
           end
         end
-        [:max_threads, :max_memory].each do |key|
+        [:min_priority, :max_priority, :sleep_delay, :read_ahead, :exit_on_complete,
+         :max_threads, :max_memory].each do |key|
           if (value = worker.setting.send(key))
             instance.send("#{key}=", value)
           end
