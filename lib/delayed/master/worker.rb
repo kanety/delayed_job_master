@@ -19,7 +19,7 @@ module Delayed
       def info
         str = name
         str += " @#{@database}" if @database
-        str += " (#{@setting.queues.join(', ')})" if @setting.queues.respond_to?(:join)
+        str += " (#{@setting.queues.join(', ')})" unless @setting.queues.empty?
         str
       end
 
