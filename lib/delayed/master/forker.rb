@@ -8,17 +8,7 @@ module Delayed
         @config = master.config
       end
 
-      def new_worker(worker)
-        @master.logger.info "forking #{worker.name}..."
-        fork_worker(worker)
-        @master.logger.info "forked #{worker.name} with pid #{worker.pid}"
-
-        @master.workers << worker
-      end
-
-      private
-
-      def fork_worker(worker)
+      def call(worker)
         @config.run_callback(:before_fork, @master, worker)
         worker.pid = fork do
           worker.pid = Process.pid
@@ -28,6 +18,8 @@ module Delayed
           worker.instance.start
         end
       end
+
+      private
 
       def create_instance(worker)
         require_relative 'worker_extension'

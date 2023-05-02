@@ -15,7 +15,7 @@ module Delayed
         extend_after_fork_callback
       end
 
-      def check
+      def call
         workers = []
         mon = Monitor.new
 

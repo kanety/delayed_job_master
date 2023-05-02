@@ -50,10 +50,13 @@ module Delayed
       def check_queued_jobs
         @master.logger.debug "checking jobs..."
 
-        new_workers = @job_checker.check
+        new_workers = @job_checker.call
         new_workers.each do |worker|
           @master.logger.info "found jobs for #{worker.info}"
-          @forker.new_worker(worker)
+          @master.logger.info "forking #{worker.name}..."
+          @forker.call(worker)
+          @master.logger.info "forked #{worker.name} with pid #{worker.pid}"
+          @master.workers << worker
         end
       end
     end
