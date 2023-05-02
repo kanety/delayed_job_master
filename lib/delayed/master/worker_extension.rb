@@ -1,6 +1,7 @@
 require_relative 'thread_pool'
 require_relative 'thread_worker'
 require_relative 'plugins/all'
+require_relative 'backend/active_record'
 
 module Delayed
   class Worker
