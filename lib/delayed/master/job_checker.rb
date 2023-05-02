@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative 'job_finder'
 require_relative 'database_detector'
 

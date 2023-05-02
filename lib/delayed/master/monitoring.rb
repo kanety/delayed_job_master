@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative 'forker'
 require_relative 'job_checker' if defined?(Delayed::Backend::ActiveRecord)
 

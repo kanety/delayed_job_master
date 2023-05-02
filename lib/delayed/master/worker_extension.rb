@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative 'thread_pool'
 require_relative 'thread_worker'
 require_relative 'plugins/all'

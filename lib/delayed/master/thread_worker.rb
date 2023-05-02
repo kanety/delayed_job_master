@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Overrides Delayed::Worker to support multithread.
 # See original code at https://github.com/collectiveidea/delayed_job/blob/master/lib/delayed/worker.rb
 module Delayed

@@ -12,7 +12,7 @@ module Dummy
     config.active_job.queue_adapter = :delayed_job
 
     database = ENV['DATABASE'] ? "database_#{ENV['DATABASE']}" : "database"
-    database << "_multi" if ENV['DATABASE_CONFIG'] == 'multi'
+    database += "_multi" if ENV['DATABASE_CONFIG'] == 'multi'
     config.paths["config/database"] = "config/#{database}.yml"
   end
 end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative 'memory_checker'
 require_relative 'signal_handler'
 require_relative 'status_notifier'

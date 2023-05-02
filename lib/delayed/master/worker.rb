@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Delayed
   class Master
     class Worker
@@ -16,8 +18,8 @@ module Delayed
 
       def info
         str = name
-        str << " @#{@database}" if @database
-        str << " (#{@setting.queues.join(', ')})" if @setting.queues.respond_to?(:join)
+        str += " @#{@database}" if @database
+        str += " (#{@setting.queues.join(', ')})" if @setting.queues.respond_to?(:join)
         str
       end
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Delayed
   class Master
     VERSION = "2.0.3"
