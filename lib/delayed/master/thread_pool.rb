@@ -4,22 +4,22 @@ module Delayed
       def initialize(size)
         @size = size
         @queue = SizedQueue.new(@size)
+        @queue_delay = 0.1
       end
 
       def schedule(&block)
         @scheduler = Thread.new do
           loop do
             while @queue.num_waiting == 0
-              sleep 0.1
+              sleep @queue_delay
             end
 
-            item = block.call
-            if item.nil?
-              @size.times { @queue.push(:exit) }
-              break
-            else
+            if item = block.call
               @queue.push(item)
               Thread.pass
+            else
+              @size.times { @queue.push(:exit) }
+              break
             end
           end
         end
