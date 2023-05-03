@@ -7,7 +7,7 @@ module Delayed
         end	
 
         def self.after_fork	
-          ::ActiveRecord::Base.establish_connection :primary
+          ::ActiveRecord::Base.establish_connection
         end	
       end	
     end	

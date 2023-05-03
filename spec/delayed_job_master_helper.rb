@@ -28,9 +28,9 @@ class BaseTester
 
   def delayed_job_klass(database = nil)
     if database
-      yield "DelayedJob#{database.capitalize}".constantize
+      yield "#{database.capitalize}DelayedJob".constantize
     else
-      yield Delayed::Job
+      yield PrimaryDelayedJob
     end
   end
 

@@ -6,7 +6,7 @@ describe Delayed::Master do
   end
 
   before do
-    [DelayedJobPrimary, DelayedJobSecondary].each do |model|
+    [PrimaryDelayedJob, SecondaryDelayedJob].each do |model|
       model.delete_all
     end
   end
@@ -23,8 +23,8 @@ describe Delayed::Master do
         tester.wait_job_performed(:secondary)
       end
 
-      expect(DelayedJobPrimary.count).to eq(0)
-      expect(DelayedJobSecondary.count).to eq(0)
+      expect(PrimaryDelayedJob.count).to eq(0)
+      expect(SecondaryDelayedJob.count).to eq(0)
     end
   end
 end
