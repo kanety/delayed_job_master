@@ -24,7 +24,7 @@ module Delayed
       private
 
       def register_signal(signal, method)
-        trap(signal) do
+        Signal.trap(signal) do
           Thread.new do
             @master.logger.info "received #{signal} signal"
             @master.public_send(method)
