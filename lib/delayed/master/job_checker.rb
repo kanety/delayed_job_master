@@ -9,7 +9,7 @@ module Delayed
       def initialize(master)
         @master = master
         @config = master.config
-        @spec_names = target_spec_names
+        @spec_names = @config.databases.presence || Database.spec_names
 
         extend_after_fork_callback
       end
@@ -38,14 +38,6 @@ module Delayed
       def extend_after_fork_callback
         @config.after_fork do |master, worker|
           ActiveRecord::Base.establish_connection(worker.database) if worker.database
-        end
-      end
-
-      def target_spec_names
-        if @config.databases.nil? || @config.databases.empty?
-          Database.spec_names
-        else
-          @config.databases
         end
       end
 

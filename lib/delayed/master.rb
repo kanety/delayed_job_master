@@ -104,7 +104,7 @@ module Delayed
       @logger.info "databases: #{@config.databases.join(', ')}" if @config.databases
       @config.worker_settings.each do |setting|
         message = "worker[#{setting.id}]: #{setting.max_processes} processes, #{setting.max_threads} threads"
-        message += " (#{setting.queues.join(', ')})" unless setting.queues.empty?
+        message += " (#{setting.queues.join(', ')})" if setting.queues.present?
         @logger.info message
       end
     end
