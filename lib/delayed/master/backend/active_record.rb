@@ -24,11 +24,14 @@ module Delayed
         end
 
         # Patch for postgresql query.
-        # See https://github.com/collectiveidea/delayed_job_active_record/pull/169 for detail.
         def self.reserve_with_scope_using_optimized_postgres(ready_scope, worker, now)
           quoted_name = connection.quote_table_name(table_name)
           subquery    = ready_scope.limit(1).lock(true).select("id").to_sql
-          sql         = "UPDATE #{quoted_name} SET locked_at = ?, locked_by = ? WHERE id = (#{subquery}) RETURNING *"
+          sql         = <<~SQL.squish
+            WITH job AS (#{subquery} SKIP LOCKED)
+              UPDATE #{quoted_name} AS jobs SET locked_at = ?, locked_by = ? FROM job
+              WHERE jobs.id = job.id RETURNING *
+          SQL
           reserved    = find_by_sql([sql, now, worker.name])
           reserved[0]
         end
