@@ -50,6 +50,9 @@ end
 
 after_fork do |master, worker|
   Delayed::Worker.after_fork if defined?(Delayed::Worker)
+  if ENV['DATABASE_CONFIG'] == 'multi'
+    ActiveRecord::Base.establish_connection worker.database.spec_name if defined?(ActiveRecord::Base)
+  end
 end
 
 before_monitor do |master|

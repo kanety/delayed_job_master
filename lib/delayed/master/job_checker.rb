@@ -10,8 +10,6 @@ module Delayed
         @master = master
         @config = master.config
         @databases = Database.all(@config.databases)
-
-        extend_after_fork_callback
       end
 
       def call
@@ -34,12 +32,6 @@ module Delayed
       end
 
       private
-
-      def extend_after_fork_callback
-        @config.after_fork do |master, worker|
-          ActiveRecord::Base.establish_connection(worker.database.spec_name) if worker.database
-        end
-      end
 
       def find_jobs_in_db(database)
         finder = JobFinder.new(database.model)
