@@ -45,15 +45,14 @@ add_worker do |worker|
 end
 
 before_fork do |master, worker|
-  Delayed::Worker.before_fork if defined?(Delayed::Worker)
+  ActiveRecord::Base.clear_active_connections!
 end
 
 after_fork do |master, worker|
-  Delayed::Worker.after_fork if defined?(Delayed::Worker)
+  ActiveRecord::Base.connection.verify!
 end
 
 before_monitor do |master|
-  ActiveRecord::Base.connection.verify! if defined?(ActiveRecord::Base)
 end
 
 after_monitor do |master|
