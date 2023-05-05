@@ -22,7 +22,7 @@ module Delayed
       private
 
       def create_instance(worker)
-        require_relative 'worker_extension'
+        require_relative 'worker/extension'
 
         instance = Delayed::Worker.new
         [:max_run_time, :max_attempts, :destroy_failed_jobs].each do |key|

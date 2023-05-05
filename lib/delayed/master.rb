@@ -7,7 +7,7 @@ require_relative 'master/command'
 require_relative 'master/worker'
 require_relative 'master/monitoring'
 require_relative 'master/signaler'
-require_relative 'master/util/file_reopener'
+require_relative 'master/file_reopener'
 
 module Delayed
   class Master
@@ -58,7 +58,7 @@ module Delayed
     def reopen_files
       @signaler.dispatch(:USR1)
       @logger.info "reopening files..."
-      Util::FileReopener.reopen
+      FileReopener.reopen
       @logger.info "reopened"
     end
 
