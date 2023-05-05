@@ -31,7 +31,8 @@ module Delayed
         yield
         @master.run_callbacks(:after_monitor)
       rescue Exception => e
-        @master.logger.warn "#{e.class}: #{e.message} at #{__FILE__}: #{__LINE__}"
+        @master.logger.warn "#{e.class}: #{e.message}"
+        @master.logger.debug e.backtrace.join("\n")
       end
 
       def check_terminated
