@@ -21,11 +21,23 @@ module Delayed
             puts opt
             exit
           end
-          opt.on('-D', '--daemon', 'Start master as a daemon') do |boolean|
-            @config.daemon(boolean)
-          end
           opt.on('-c', '--config=FILE', 'Specify config file') do |file|
             @config.read(file)
+          end
+          opt.on('-D', '--daemon', 'Start master as a daemon') do |boolean|
+            @config.daemon = boolean
+          end
+          opt.on('--working-directory=DIR', 'Path to working directory') do |dir|
+            @config.working_directory = dir
+          end
+          opt.on('--pid-file=FILE', 'Path to pid file') do |file|
+            @config.pid_file = file
+          end
+          opt.on('--log-file=FILE', 'Path to log file') do |file|
+            @config.log_file = file
+          end
+          opt.on('--log-level=LEVEL', 'Log level') do |level|
+            @config.log_level = level.to_sym
           end
         }.parse(args)
       end

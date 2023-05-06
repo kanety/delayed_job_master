@@ -5,7 +5,7 @@ require_relative 'worker_setting'
 module Delayed
   class Master
     class Config
-      SIMPLE_CONFIGS   = [:working_directory, :log_file, :log_level, :pid_file, :monitor_wait, :daemon, :databases]
+      SIMPLE_CONFIGS   = [:daemon, :working_directory, :log_file, :log_level, :pid_file, :monitor_wait, :databases]
       CALLBACK_CONFIGS = [:before_fork, :after_fork, :before_monitor, :after_monitor]
 
       attr_accessor *SIMPLE_CONFIGS
@@ -13,8 +13,18 @@ module Delayed
       attr_reader :workers
 
       def initialize(file = nil)
+        @daemon = false
+        @working_directory = Dir.pwd
+        @pid_file = "#{@working_directory}/tmp/pids/delayed_job_master.pid"
+        @log_file = "#{@working_directory}/log/delayed_job_master.log"
+        @log_level = :info
+        @monitor_wait = 5
+        @databases = []
+        @before_fork = []
+        @after_fork = []
+        @before_monitor = []
+        @after_monitor = []        
         @workers = []
-        CALLBACK_CONFIGS.each { |key| send("#{key}=", []) }
         read(file) if file
       end
 

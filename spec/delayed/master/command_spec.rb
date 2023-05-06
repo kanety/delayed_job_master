@@ -8,6 +8,18 @@ describe Delayed::Master::Command do
     Delayed::Master::Command.new(%w(-h)).config
   end
 
+  context 'config' do
+    it 'parses long option' do
+      config = Delayed::Master::Command.new(%W(--config #{config_file})).config
+      expect(config.workers.size).to eq(2)
+    end
+
+    it 'parses short option' do
+      config = Delayed::Master::Command.new(%W(-c #{config_file})).config
+      expect(config.workers.size).to eq(2)
+    end
+  end
+
   context 'daemon' do
     it 'parses long option' do
       config = Delayed::Master::Command.new(%w(--daemon)).config
@@ -20,15 +32,31 @@ describe Delayed::Master::Command do
     end
   end
 
-  context 'config' do
+  context 'working_directory' do
     it 'parses long option' do
-      config = Delayed::Master::Command.new(%W(--config #{config_file})).config
-      expect(config.workers.size).to eq(2)
+      config = Delayed::Master::Command.new(%w(--working-directory=dir)).config
+      expect(config.working_directory).to eq('dir')
     end
+  end
 
-    it 'parses short option' do
-      config = Delayed::Master::Command.new(%W(-c #{config_file})).config
-      expect(config.workers.size).to eq(2)
+  context 'pid_file' do
+    it 'parses long option' do
+      config = Delayed::Master::Command.new(%w(--pid-file=file)).config
+      expect(config.pid_file).to eq('file')
+    end
+  end
+
+  context 'log_file' do
+    it 'parses long option' do
+      config = Delayed::Master::Command.new(%w(--log-file=file)).config
+      expect(config.log_file).to eq('file')
+    end
+  end
+
+  context 'log_level' do
+    it 'parses long option' do
+      config = Delayed::Master::Command.new(%w(--log-level=level)).config
+      expect(config.log_level).to eq(:level)
     end
   end
 end
