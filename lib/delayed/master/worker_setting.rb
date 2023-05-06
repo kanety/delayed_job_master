@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Delayed
-  class Master
+  module Master
     class WorkerSetting
       SIMPLE_CONFIGS = [:id, :max_processes, :max_threads, :max_memory,
                         :min_priority, :max_priority, :sleep_delay, :read_ahead, :exit_on_complete,

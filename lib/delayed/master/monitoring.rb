@@ -4,7 +4,7 @@ require_relative 'forker'
 require_relative 'job_checker' if defined?(Delayed::Backend::ActiveRecord)
 
 module Delayed
-  class Master
+  module Master
     class Monitoring
       def initialize(master)
         @master = master

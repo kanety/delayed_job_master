@@ -4,7 +4,7 @@ require 'optparse'
 require_relative 'config'
 
 module Delayed
-  class Master
+  module Master
     class Command
       attr_reader :config
 

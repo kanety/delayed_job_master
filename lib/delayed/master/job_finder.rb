@@ -3,7 +3,7 @@
 # JobFinder runs SQL query which is almost same as delayed_job_active_record.
 # See https://github.com/collectiveidea/delayed_job_active_record/blob/master/lib/delayed/backend/active_record.rb
 module Delayed
-  class Master
+  module Master
     class JobFinder
       def initialize(klass)
         @klass = klass

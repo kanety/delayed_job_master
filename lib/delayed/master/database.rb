@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Delayed
-  class Master
+  module Master
     class Database
       attr_accessor :spec_name
 

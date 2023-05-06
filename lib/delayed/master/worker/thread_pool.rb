@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Delayed
-  class Master
+  module Master
     class Worker
       class ThreadPool
         def initialize(size)

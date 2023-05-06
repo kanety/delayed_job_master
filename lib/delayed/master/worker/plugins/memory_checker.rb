@@ -3,7 +3,7 @@
 require 'get_process_mem'
 
 module Delayed
-  class Master
+  module Master
     class Worker
       module Plugins
         class MemoryChecker < Delayed::Plugin

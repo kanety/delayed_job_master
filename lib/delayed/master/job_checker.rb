@@ -4,7 +4,7 @@ require_relative 'job_finder'
 require_relative 'database'
 
 module Delayed
-  class Master
+  module Master
     class JobChecker
       def initialize(master)
         @master = master

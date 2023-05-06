@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Delayed
-  class Master
+  module Master
     class Worker
       attr_accessor :setting, :database
       attr_accessor :pid, :instance

@@ -3,7 +3,7 @@
 # Overrides Delayed::Worker to support multithread.
 # See original code at https://github.com/collectiveidea/delayed_job/blob/master/lib/delayed/worker.rb
 module Delayed
-  class Master
+  module Master
     class Worker
       module ThreadWorker
         def work_off(num = 100)
