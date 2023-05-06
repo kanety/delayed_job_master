@@ -20,7 +20,7 @@ module Delayed
           Thread.new(database) do |database|
             find_jobs_in_db(database) do |setting|
               mon.synchronize do
-                workers << Worker.new(index: @master.workers.size + workers.size, database: database, setting: setting)
+                workers << Worker.new(database: database, setting: setting)
               end
             end
           end

@@ -3,7 +3,7 @@
 module Delayed
   class Master
     class Worker
-      attr_accessor :index, :setting, :database
+      attr_accessor :setting, :database
       attr_accessor :pid, :instance
 
       def initialize(attrs = {})
@@ -24,7 +24,7 @@ module Delayed
       end
 
       def process_title
-        "delayed_job.#{@index}: #{info}"
+        "delayed_job: #{info}"
       end
     end
   end
