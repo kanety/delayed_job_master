@@ -50,8 +50,7 @@ module Delayed
 
         def spec_names_without_replica
           configs = ActiveRecord::Base.configurations.configs_for(env_name: Rails.env)
-          configs.reject!(&:replica?)
-          configs.map do |c|
+          configs.reject(&:replica?).map do |c|
             c.respond_to?(:name) ? c.name.to_sym : c.spec_name.to_sym
           end
         end
