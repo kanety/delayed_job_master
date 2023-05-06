@@ -1,13 +1,12 @@
 class BaseTester
   def enqueue_timer_job(database = nil, **options)
     options[:priority] ||= 1
-    delayed_job_klass(database) do |klass|
-      klass.transaction do
-        count = options.delete(:count) || 1
-        count.times do
-          job = TimerJob.new(2)
-          klass.enqueue(ActiveJob::QueueAdapters::DelayedJobAdapter::JobWrapper.new(job.serialize), options)
-        end
+    klass = delayed_job_klass(database)
+    klass.transaction do
+      count = options.delete(:count) || 1
+      count.times do
+        job = TimerJob.new(2)
+        klass.enqueue(ActiveJob::QueueAdapters::DelayedJobAdapter::JobWrapper.new(job.serialize), options)
       end
     end
   end
@@ -26,29 +25,26 @@ class BaseTester
 
   private
 
-  def delayed_job_klass(database = nil)
-    if database
-      yield "#{database.capitalize}DelayedJob".constantize
-    else
-      yield PrimaryDelayedJob
-    end
+  def delayed_job_klass(database)
+    database ||= :primary
+    klass = "#{database.capitalize}DelayedJob".constantize
+    klass.establish_connection database
+    klass
   end
 
   def wait_job_performing_for(database, limit)
     wait_while(limit) do
       puts "wait job performing..."
-      delayed_job_klass(database) do |klass|
-        klass.where(locked_at: nil).count > 0
-      end
+      klass = delayed_job_klass(database)
+      klass.where(locked_at: nil).count > 0
     end
   end
 
   def wait_job_performed_for(database, limit)
     wait_while(limit) do
       puts "wait job performed..."
-      delayed_job_klass(database) do |klass|
-        klass.where.not(locked_at: nil).count > 0
-      end
+      klass = delayed_job_klass(database)
+      klass.where.not(locked_at: nil).count > 0
     end
   end
 
