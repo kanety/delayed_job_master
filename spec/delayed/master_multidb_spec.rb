@@ -21,6 +21,7 @@ describe Delayed::Master do
         expect(master.workers.size).to eq(2)
         tester.wait_job_performed(:primary)
         tester.wait_job_performed(:secondary)
+        tester.wait_worker_terminated
       end
 
       expect(PrimaryDelayedJob.count).to eq(0)

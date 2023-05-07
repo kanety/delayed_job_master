@@ -75,6 +75,13 @@ class MasterTester < BaseTester
     @master.stop
     thread.join
   end
+
+  def wait_worker_terminated
+    wait_while(6) do
+      puts "wait worker terminated..."
+      @master.workers.count != 0
+    end
+  end
 end
 
 class WorkerTester < BaseTester

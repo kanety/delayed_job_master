@@ -40,8 +40,15 @@ end
 # worker2
 add_worker do |worker|
   worker.queues %w(queue2)
-  worker.max_processes 2
+  worker.max_processes 1
   worker.max_threads 5
+end
+
+# worker3
+add_worker do |worker|
+  worker.queues %w(queue3)
+  worker.max_processes 3
+  worker.max_threads 1
 end
 
 before_fork do |master, worker|

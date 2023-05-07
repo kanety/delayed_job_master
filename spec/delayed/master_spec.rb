@@ -16,6 +16,7 @@ describe Delayed::Master do
 
         tester.kill(:TERM)
         tester.wait_job_performed
+        tester.wait_worker_terminated
         expect(master.stop?).to eq(true)
       end
     end
@@ -28,6 +29,7 @@ describe Delayed::Master do
 
         tester.kill(:INT)
         tester.wait_job_performed
+        tester.wait_worker_terminated
         expect(master.stop?).to eq(true)
       end
     end
@@ -40,6 +42,7 @@ describe Delayed::Master do
 
         tester.kill(:QUIT)
         tester.wait_job_performed
+        tester.wait_worker_terminated
         expect(master.stop?).to eq(true)
       end
     end
@@ -52,6 +55,7 @@ describe Delayed::Master do
 
         tester.kill(:USR1)
         tester.wait_job_performed
+        tester.wait_worker_terminated
         expect(master.stop?).to eq(false)
       end
     end
@@ -65,6 +69,7 @@ describe Delayed::Master do
         allow(master).to receive(:exec).and_return(nil)
         tester.kill(:USR2)
         tester.wait_job_performed
+        tester.wait_worker_terminated
         expect(master).to have_received(:exec).once
       end
     end
@@ -80,19 +85,33 @@ describe Delayed::Master do
       tester.start do |master|
         tester.enqueue_timer_job(queue: 'queue1')
         tester.wait_job_performing
+        tester.wait_worker_terminated
         expect(master.workers.size).to eq(1)
       end
 
       $0 = proc_title
     end
 
-    it 'runs multiple workers' do
+    it 'runs multiple workers with different queues' do
       tester.start do |master|
         tester.enqueue_timer_job(queue: 'queue1')
         tester.enqueue_timer_job(queue: 'queue2')
         tester.wait_job_performing
         expect(master.workers.size).to eq(2)
         tester.wait_job_performed
+        tester.wait_worker_terminated
+      end
+
+      expect(Delayed::Job.count).to eq(0)
+    end
+
+    it 'runs multiple workers with same queues' do
+      tester.start do |master|
+        tester.enqueue_timer_job(queue: 'queue3', count: 3)
+        tester.wait_job_performing
+        expect(master.workers.size).to eq(3)
+        tester.wait_job_performed
+        tester.wait_worker_terminated
       end
 
       expect(Delayed::Job.count).to eq(0)
