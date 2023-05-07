@@ -101,7 +101,7 @@ module Delayed
       end
 
       def print_config
-        @logger.info "databases: #{@config.databases.join(', ')}" if @config.databases
+        @logger.info "databases: #{@config.databases.join(', ')}" if @config.databases.present?
         @config.worker_settings.each do |setting|
           message = "worker[#{setting.id}]: #{setting.max_processes} processes, #{setting.max_threads} threads"
           message += " (#{setting.queues.join(', ')})" if setting.queues.present?

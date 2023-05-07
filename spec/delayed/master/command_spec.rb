@@ -59,4 +59,11 @@ describe Delayed::Master::Command do
       expect(config.log_level).to eq(:level)
     end
   end
+
+  context 'databases' do
+    it 'parses long option' do
+      config = Delayed::Master::Command.new(%w(--databases=db1,db2)).config
+      expect(config.databases).to eq([:db1, :db2])
+    end
+  end
 end

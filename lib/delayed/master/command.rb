@@ -39,6 +39,9 @@ module Delayed
           opt.on('--log-level=LEVEL', 'Log level') do |level|
             @config.log_level = level.to_sym
           end
+          opt.on('--databases=DB1,DB2', Array, 'Database spec name to check delayed_jobs table') do |databases|
+            @config.databases = databases.map(&:to_sym)
+          end
         }.parse(args)
       end
     end
