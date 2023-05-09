@@ -9,7 +9,7 @@ describe Delayed::Worker do
 
   it 'traps USR1' do
     tester.start do |worker|
-      tester.enqueue_timer_job
+      tester.enqueue_timer_job(queue: 'worker_test')
       tester.wait_job_performing
 
       tester.kill(:USR1)
@@ -20,7 +20,7 @@ describe Delayed::Worker do
 
   it 'traps USR2' do
     tester.start do |worker|
-      tester.enqueue_timer_job
+      tester.enqueue_timer_job(queue: 'worker_test')
       tester.wait_job_performing
 
       tester.kill(:USR2)
@@ -31,7 +31,7 @@ describe Delayed::Worker do
 
   it 'checks memory usage' do
     tester.start(max_memory: 1) do |worker|
-      tester.enqueue_timer_job(count: 2)
+      tester.enqueue_timer_job(queue: 'worker_test', count: 2)
       tester.wait_job_performing
       tester.wait_worker_stopped
       expect(Delayed::Job.count).to eq(1)
@@ -40,7 +40,7 @@ describe Delayed::Worker do
 
   it 'works multithread' do
     tester.start(max_threads: 2) do |worker|
-      tester.enqueue_timer_job(count: 2)
+      tester.enqueue_timer_job(queue: 'worker_test', count: 2)
       tester.wait_job_performing
       tester.wait_job_performed
       expect(Delayed::Job.count).to eq(0)

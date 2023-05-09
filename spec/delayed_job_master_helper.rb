@@ -87,7 +87,7 @@ end
 class WorkerTester < BaseTester
   def initialize
     require 'delayed/master/worker/extension'
-    @worker = Delayed::Worker.new(sleep_delay: 1, exit_on_complete: false)
+    @worker = Delayed::Worker.new(sleep_delay: 1, exit_on_complete: false, queues: ['worker_test'])
     @worker.master_logger = Logger.new(Rails.root.join("log/delayed_job_master.log"))
   end
 
