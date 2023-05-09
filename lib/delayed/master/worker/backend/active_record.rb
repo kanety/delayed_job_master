@@ -13,16 +13,6 @@ module Delayed
           )
         end
 
-        # Support only optimized postgres or default sql.
-        def self.reserve_with_scope_using_optimized_sql(ready_scope, worker, now)
-          case connection.adapter_name
-          when "PostgreSQL", "PostGIS"
-            reserve_with_scope_using_optimized_postgres(ready_scope, worker, now)
-          else
-            reserve_with_scope_using_default_sql(ready_scope, worker, now)
-          end
-        end
-
         # Patch for postgresql query.
         def self.reserve_with_scope_using_optimized_postgres(ready_scope, worker, now)
           quoted_name = connection.quote_table_name(table_name)
@@ -34,6 +24,16 @@ module Delayed
           SQL
           reserved    = find_by_sql([sql, now, worker.name])
           reserved[0]
+        end
+
+        # Patch for mysql query.
+        def self.reserve_with_scope_using_optimized_mysql(ready_scope, worker, now)
+          transaction do
+            ready_scope.limit(worker.read_ahead).select(:id).lock.detect do |job|
+              count = where(id: job.id).update_all(locked_at: now, locked_by: worker.name)
+              count == 1 && job.reload
+            end
+          end
         end
       end
     end
