@@ -52,3 +52,7 @@ jobs:
     - name: Run test
       run: |
         bundle exec rspec
+    - name: Show log
+      run: |
+        cat spec/dummy/log/test.log
+      if: ${{ failure() }}
