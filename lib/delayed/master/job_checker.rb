@@ -41,10 +41,9 @@ module Delayed
       end
 
       def detect_free_worker_settings(database)
-        workers = @master.workers.select { |worker| worker.database.spec_name == database.spec_name }
-        workers = workers.group_by(&:setting)
         @config.worker_settings.each_with_object([]) do |setting, array|
-          free_count = setting.max_processes - workers[setting].to_a.size
+          used_count = @master.workers.count { |worker| worker.setting.queues == setting.queues }
+          free_count = setting.max_processes - used_count
           array << [setting, free_count] if free_count > 0
         end
       end
