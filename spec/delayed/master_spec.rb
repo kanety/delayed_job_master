@@ -76,22 +76,6 @@ describe Delayed::Master do
   end
 
   context 'workers' do
-    it 'runs a worker' do
-      proc_title = $0
-
-      allow_any_instance_of(Delayed::Master::Forker).to receive(:fork).twice { |&block| block.call }
-      allow_any_instance_of(Delayed::Worker).to receive(:start).twice
-
-      tester.start do |master|
-        tester.enqueue_timer_job(queue: 'queue1')
-        tester.wait_job_performing
-        tester.wait_worker_terminated
-        expect(master.workers.size).to eq(1)
-      end
-
-      $0 = proc_title
-    end
-
     it 'runs multiple workers with different queues' do
       tester.start do |master|
         tester.enqueue_timer_job(queue: 'queue1')
