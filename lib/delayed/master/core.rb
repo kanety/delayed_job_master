@@ -11,11 +11,12 @@ require_relative 'file_reopener'
 module Delayed
   module Master
     class Core
-      attr_reader :config, :logger, :workers
+      attr_reader :config, :logger, :databases, :workers
 
       def initialize(argv)
         @config = Command.new(argv).config
         @logger = setup_logger(@config.log_file, @config.log_level)
+        @databases = Database.all(@config.databases)
         @workers = []
 
         @signaler = Signaler.new(self)

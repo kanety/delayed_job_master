@@ -9,7 +9,7 @@ module Delayed
       def initialize(master)
         @master = master
         @config = master.config
-        @databases = Database.all(@config.databases)
+        @databases = master.databases
       end
 
       def call
