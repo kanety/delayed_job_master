@@ -3,6 +3,9 @@
 module Delayed
   module Master
     class Database
+      class_attribute :model_cache
+      self.model_cache = {}
+
       attr_accessor :spec_name
 
       def initialize(spec_name)
@@ -18,7 +21,7 @@ module Delayed
       private
 
       def cache_model
-        self.class.models[@spec_name] ||= yield
+        self.class.model_cache[@spec_name] ||= yield
       end
 
       def define_model
@@ -32,9 +35,6 @@ module Delayed
       end
 
       class << self
-        class_attribute :models
-        self.models = {}
-
         def all(spec_names = nil)
           spec_names = spec_names.presence || spec_names_with_delayed_job_table
           spec_names.map { |spec_name| new(spec_name) }
@@ -56,15 +56,9 @@ module Delayed
         end
 
         def exist_delayed_job_table?(spec_name)
-          klass = if Delayed::Master.const_defined?('ARBase')
-              Delayed::Master.const_get('ARBase')
-            else
-              Class.new(ActiveRecord::Base).tap do |klass|
-                Delayed::Master.const_set('ARBase', klass)
-              end
-            end
-          klass.establish_connection(spec_name)
-          klass.connection.tables.include?('delayed_jobs')
+          new(spec_name).model.connection_pool.with_connection do |connection|
+            connection.tables.include?('delayed_jobs')
+          end
         end
       end
     end

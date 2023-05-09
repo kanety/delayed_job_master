@@ -5,8 +5,8 @@
 module Delayed
   module Master
     class JobFinder
-      def initialize(klass)
-        @klass = klass
+      def initialize(model)
+        @model = model
       end
 
       def call(setting, limit)
@@ -20,7 +20,7 @@ module Delayed
       private
 
       def scope(setting)
-        @klass.ready_to_run(nil, setting.max_run_time || Delayed::Worker::DEFAULT_MAX_RUN_TIME).tap do |jobs|
+        @model.ready_to_run(nil, setting.max_run_time || Delayed::Worker::DEFAULT_MAX_RUN_TIME).tap do |jobs|
           jobs.where!("priority >= ?", setting.min_priority) if setting.min_priority
           jobs.where!("priority <= ?", setting.max_priority) if setting.max_priority
           jobs.where!(queue: setting.queues) if setting.queues.present?
