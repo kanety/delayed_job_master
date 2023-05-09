@@ -12,17 +12,19 @@ module Delayed
 
         def schedule(&block)
           @scheduler = Thread.new do
-            loop do
-              while @queue.num_waiting == 0
-                sleep @queue_delay
-              end
+            Rails.application.executor.wrap do
+              loop do
+                while @queue.num_waiting == 0
+                  sleep @queue_delay
+                end
 
-              if item = block.call
-                @queue.push(item)
-                Thread.pass
-              else
-                @size.times { @queue.push(:exit) }
-                break
+                if item = block.call
+                  @queue.push(item)
+                  Thread.pass
+                else
+                  @size.times { @queue.push(:exit) }
+                  break
+                end
               end
             end
           end
@@ -31,12 +33,14 @@ module Delayed
         def work(&block)
           @threads = @size.times.map do
             Thread.new do
-              loop do
-                item = @queue.pop
-                if item == :exit
-                  break
-                else
-                  block.call(item)
+              Rails.application.executor.wrap do
+                loop do
+                  item = @queue.pop
+                  if item == :exit
+                    break
+                  else
+                    block.call(item)
+                  end
                 end
               end
             end
