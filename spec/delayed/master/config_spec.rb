@@ -5,8 +5,8 @@ describe Delayed::Master::Config do
 
   context 'master setting' do
     it 'sets a integer value' do
-      config.monitor_wait 10
-      expect(config.monitor_wait).to eq(10)
+      config.monitor_interval 10
+      expect(config.monitor_interval).to eq(10)
     end
 
     it 'sets a boolean value' do

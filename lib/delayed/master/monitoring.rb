@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require_relative 'forker'
-require_relative 'job_checker'
-
 module Delayed
   module Master
     class Monitoring
@@ -11,18 +8,13 @@ module Delayed
         @config = master.config
         @threads = []
         @mon = Monitor.new
-        @databases = master.databases
-        @forker = Forker.new(master)
-        @job_checker = JobChecker.new(master)
       end
 
       def start
         loop do
           break if @master.stop?
-          monitor do
-            check_queued_jobs
-          end
-          sleep @config.monitor_wait
+          monitor
+          sleep @config.monitor_interval
         end
       end
 
@@ -57,7 +49,7 @@ module Delayed
 
       def monitor
         @master.run_callbacks(:before_monitor)
-        yield
+        yield if block_given?
         @master.run_callbacks(:after_monitor)
       rescue => e
         @master.logger.warn "#{e.class}: #{e.message}"
@@ -74,18 +66,6 @@ module Delayed
       rescue => e
         @master.logger.warn "#{e.class}: #{e.message}"
         @master.logger.debug e.backtrace.join("\n")
-      end
-
-      def check_queued_jobs
-        @master.logger.debug "checking jobs..."
-
-        new_workers = @job_checker.call
-        new_workers.each do |worker|
-          @master.logger.info "found jobs for #{worker.info}"
-          @forker.call(worker)
-          @master.add_worker(worker)
-          schedule(worker)
-        end
       end
     end
   end

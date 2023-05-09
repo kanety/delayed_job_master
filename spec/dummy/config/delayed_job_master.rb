@@ -3,8 +3,11 @@ app_root = defined?(Rails) ? Rails.root : Dir.pwd
 # working directory
 working_directory app_root
 
-# monitor wait time in second
-monitor_wait 1
+# monitor interval for events (in seconds)
+monitor_interval 2
+
+# polling interval for new jobs (in seconds)
+polling_interval 1
 
 # path to pid file
 pid_file "#{app_root}/tmp/pids/delayed_job_master.pid"

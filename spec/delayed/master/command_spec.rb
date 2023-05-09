@@ -60,6 +60,20 @@ describe Delayed::Master::Command do
     end
   end
 
+  context 'monitor_interval' do
+    it 'parses long option' do
+      config = Delayed::Master::Command.new(%w(--monitor-interval=10)).config
+      expect(config.monitor_interval).to eq(10)
+    end
+  end
+
+  context 'polling_interval' do
+    it 'parses long option' do
+      config = Delayed::Master::Command.new(%w(--polling-interval=10)).config
+      expect(config.polling_interval).to eq(10)
+    end
+  end
+
   context 'databases' do
     it 'parses long option' do
       config = Delayed::Master::Command.new(%w(--databases=db1,db2)).config

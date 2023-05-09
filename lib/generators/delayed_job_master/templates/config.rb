@@ -1,8 +1,11 @@
 # working directory
 working_directory Dir.pwd
 
-# monitor wait time in second
-monitor_wait 5
+# monitor interval for events (in seconds)
+monitor_interval 5
+
+# polling interval for new jobs (in seconds)
+polling_interval 5
 
 # path to pid file
 pid_file "#{Dir.pwd}/tmp/pids/delayed_job_master.pid"

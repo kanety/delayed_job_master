@@ -5,6 +5,7 @@ require 'logger'
 require_relative 'command'
 require_relative 'worker'
 require_relative 'monitoring'
+require_relative 'job_checker'
 require_relative 'signaler'
 require_relative 'file_reopener'
 
@@ -12,7 +13,7 @@ module Delayed
   module Master
     class Core
       attr_reader :config, :logger, :databases, :workers
-      attr_reader :monitoring
+      attr_reader :monitoring, :job_checker
 
       def initialize(argv)
         @config = Command.new(argv).config
@@ -23,6 +24,7 @@ module Delayed
 
         @signaler = Signaler.new(self)
         @monitoring = Monitoring.new(self)
+        @job_checker = JobChecker.new(self)
       end
 
       def run
@@ -41,6 +43,19 @@ module Delayed
       end
 
       def start
+        start_job_checker do
+          start_monitoring
+        end
+      end
+
+      def start_job_checker
+        @job_checker.start
+        yield
+        @job_checker.wait
+        @job_checker.shutdown
+      end
+
+      def start_monitoring
         @monitoring.start
         @monitoring.wait
         @monitoring.shutdown

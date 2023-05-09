@@ -5,7 +5,8 @@ require_relative 'worker_setting'
 module Delayed
   module Master
     class Config
-      SIMPLE_CONFIGS   = [:daemon, :working_directory, :log_file, :log_level, :pid_file, :monitor_wait, :databases]
+      SIMPLE_CONFIGS   = [:daemon, :working_directory, :log_file, :log_level, :pid_file,
+                          :monitor_interval, :polling_interval, :databases]
       CALLBACK_CONFIGS = [:before_fork, :after_fork, :before_monitor, :after_monitor]
 
       attr_accessor *SIMPLE_CONFIGS
@@ -18,7 +19,8 @@ module Delayed
         @pid_file = "#{@working_directory}/tmp/pids/delayed_job_master.pid"
         @log_file = "#{@working_directory}/log/delayed_job_master.log"
         @log_level = :info
-        @monitor_wait = 5
+        @monitor_interval = 5
+        @polling_interval = 5
         @databases = []
         @before_fork = []
         @after_fork = []
@@ -61,6 +63,11 @@ module Delayed
             instance_variable_get("@#{key}")
           end
         end
+      end
+
+      def monitor_wait(value = nil)
+        puts "DEPRECATION WARNING: deprecated monitor_wait setting was called from #{caller(1, 1).first}. Use monitor_interval instead."
+        @monitor_interval = @polling_interval = value
       end
     end
   end

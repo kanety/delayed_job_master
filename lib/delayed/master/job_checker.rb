@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
-require_relative 'job_finder'
 require_relative 'database'
+require_relative 'forker'
+require_relative 'job_finder'
 
 module Delayed
   module Master
@@ -12,23 +13,27 @@ module Delayed
         @databases = master.databases
       end
 
-      def call
-        workers = []
-        mon = Monitor.new
-
-        threads = @databases.map do |database|
-          Thread.new(database) do |database|
-            check(database).each do |setting|
-              mon.synchronize do
-                workers << Worker.new(database: database, setting: setting)
+      def start
+        @thread = Thread.new do
+          loop do
+            if @master.stop?
+              break
+            else
+              @databases.each do |database|
+                check(database)
               end
             end
+            sleep @config.polling_interval
           end
         end
+      end
 
-        threads.each(&:join)
+      def wait
+        @thread&.join
+      end
 
-        workers
+      def shutdown
+        @thread&.kill
       end
 
       private
@@ -37,7 +42,17 @@ module Delayed
         settings = detect_free_worker_settings(database)
         return if settings.blank?
 
-        check_jobs(database, settings)
+        @master.logger.debug "checking jobs @#{database.spec_name}..."
+        check_jobs(database, settings).each do |setting|
+          worker = Worker.new(database: database, setting: setting)
+          @master.logger.info "found jobs for #{worker.info}"
+          Forker.new(@master).call(worker)
+          @master.add_worker(worker)
+          @master.monitoring.schedule(worker)
+        end
+      rescue => e
+        @master.logger.warn "#{e.class}: #{e.message}"
+        @master.logger.debug e.backtrace.join("\n")
       end
 
       def detect_free_worker_settings(database)
