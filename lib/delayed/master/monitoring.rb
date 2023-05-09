@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'forker'
-require_relative 'job_checker' if defined?(Delayed::Backend::ActiveRecord)
+require_relative 'job_checker'
 
 module Delayed
   module Master
@@ -9,19 +9,48 @@ module Delayed
       def initialize(master)
         @master = master
         @config = master.config
+        @threads = []
+        @mon = Monitor.new
+        @databases = master.databases
         @forker = Forker.new(master)
         @job_checker = JobChecker.new(master)
       end
 
-      def monitor_while(&block)
+      def start
         loop do
-          break if block.call
+          break if @master.stop?
           monitor do
-            check_terminated
             check_queued_jobs
           end
-          sleep @config.monitor_wait.to_i
+          sleep @config.monitor_wait
         end
+      end
+
+      def schedule(worker)
+        add_thread(Thread.new do
+          wait_pid(worker)
+          remove_thread(Thread.current)
+        end)
+      end
+
+      def add_thread(thread)
+        @mon.synchronize do
+          @threads << thread
+        end
+      end
+
+      def remove_thread(thread)
+        @mon.synchronize do
+          @threads.delete_if { |t| t == thread }
+        end
+      end
+
+      def wait
+        @threads.each(&:join)
+      end
+
+      def shutdown
+        @threads.each(&:kill)
       end
 
       private
@@ -30,22 +59,21 @@ module Delayed
         @master.run_callbacks(:before_monitor)
         yield
         @master.run_callbacks(:after_monitor)
-      rescue Exception => e
+      rescue => e
         @master.logger.warn "#{e.class}: #{e.message}"
         @master.logger.debug e.backtrace.join("\n")
       end
 
-      def check_terminated
-        if (pid = terminated_pid)
-          @master.logger.debug "found terminated pid: #{pid}"
-          @master.workers.reject! { |worker| worker.pid == pid }
-        end
-      end
-
-      def terminated_pid
-        Process.waitpid(-1, Process::WNOHANG)
+      def wait_pid(worker)
+        Process.waitpid(worker.pid)
+        @master.logger.debug "found terminated pid: #{worker.pid}"
+        @master.remove_worker(worker)
       rescue Errno::ECHILD
-        nil
+        @master.logger.warn "failed to waitpid: #{worker.pid}"
+        @master.remove_worker(worker)
+      rescue => e
+        @master.logger.warn "#{e.class}: #{e.message}"
+        @master.logger.debug e.backtrace.join("\n")
       end
 
       def check_queued_jobs
@@ -54,10 +82,9 @@ module Delayed
         new_workers = @job_checker.call
         new_workers.each do |worker|
           @master.logger.info "found jobs for #{worker.info}"
-          @master.logger.info "forking #{worker.name}..."
           @forker.call(worker)
-          @master.logger.info "forked #{worker.name} with pid #{worker.pid}"
-          @master.workers << worker
+          @master.add_worker(worker)
+          schedule(worker)
         end
       end
     end

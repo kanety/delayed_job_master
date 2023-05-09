@@ -52,13 +52,14 @@ add_worker do |worker|
 end
 
 before_fork do |master, worker|
-  ActiveRecord::Base.clear_active_connections!
+  ActiveRecord::Base.connection.disconnect!
 end
 
 after_fork do |master, worker|
-  ActiveRecord::Base.connection.verify!
   if ENV['DATABASE_CONFIG'] == 'multi'
     ActiveRecord::Base.establish_connection worker.database.spec_name
+  else
+    ActiveRecord::Base.establish_connection
   end
 end
 

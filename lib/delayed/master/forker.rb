@@ -1,25 +1,44 @@
 # frozen_string_literal: true
 
+require_relative 'file_reopener'
+
 module Delayed
   module Master
     class Forker
       def initialize(master)
         @master = master
         @config = master.config
+        @databases = master.databases
       end
 
       def call(worker)
-        @master.run_callbacks(:before_fork, worker)
-        worker.pid = fork do
-          worker.pid = Process.pid
-          worker.instance = create_instance(worker)
-          @master.run_callbacks(:after_fork, worker)
-          $0 = worker.process_title
-          worker.instance.start
+        around_fork(worker) do
+          worker.pid = fork do
+            after_fork_at_child(worker)
+            worker.pid = Process.pid
+            worker.instance = create_instance(worker)
+            $0 = worker.process_title
+            worker.instance.start
+          end
         end
       end
 
       private
+
+      def around_fork(worker)
+        @master.logger.info "forking #{worker.name}..."
+        @master.run_callbacks(:before_fork, worker)
+        @databases.each do |database|
+          database.model.connection_pool.disconnect!
+        end
+        yield
+        @master.logger.info "forked #{worker.name} with pid #{worker.pid}"
+      end
+
+      def after_fork_at_child(worker)
+        FileReopener.reopen
+        @master.run_callbacks(:after_fork, worker)
+      end
 
       def create_instance(worker)
         require_relative 'worker/extension'

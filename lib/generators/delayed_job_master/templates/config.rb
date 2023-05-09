@@ -45,11 +45,11 @@ add_worker do |worker|
 end
 
 before_fork do |master, worker|
-  ActiveRecord::Base.clear_active_connections!
+  ActiveRecord::Base.connection.disconnect!
 end
 
 after_fork do |master, worker|
-  ActiveRecord::Base.connection.verify!
+  ActiveRecord::Base.establish_connection
 end
 
 before_monitor do |master|

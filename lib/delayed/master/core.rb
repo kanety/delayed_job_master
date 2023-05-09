@@ -12,12 +12,14 @@ module Delayed
   module Master
     class Core
       attr_reader :config, :logger, :databases, :workers
+      attr_reader :monitoring
 
       def initialize(argv)
         @config = Command.new(argv).config
         @logger = setup_logger(@config.log_file, @config.log_level)
         @databases = Database.all(@config.databases)
         @workers = []
+        @mon = Monitor.new
 
         @signaler = Signaler.new(self)
         @monitoring = Monitoring.new(self)
@@ -32,10 +34,16 @@ module Delayed
         handle_pid_file do
           @signaler.register
           @prepared = true
-          @monitoring.monitor_while { stop? }
+          start
         end
 
         @logger.info "shut down master"
+      end
+
+      def start
+        @monitoring.start
+        @monitoring.wait
+        @monitoring.shutdown
       end
 
       def prepared?
@@ -67,6 +75,18 @@ module Delayed
         @signaler.dispatch(:USR2)
         @logger.info "restarting master..."
         exec(*([$0] + ARGV))
+      end
+
+      def add_worker(worker)
+        @mon.synchronize do
+          @workers << worker
+        end
+      end
+
+      def remove_worker(worker)
+        @mon.synchronize do
+          @workers.delete(worker)
+        end
       end
 
       def run_callbacks(key, *args)
