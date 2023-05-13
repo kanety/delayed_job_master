@@ -70,6 +70,17 @@ module Delayed
         puts "DEPRECATION WARNING: deprecated monitor_wait setting was called from #{caller(1, 1).first}. Use monitor_interval instead."
         @monitor_interval = @polling_interval = value
       end
+
+      def abstract_texts
+        texts = []
+        texts << "databases: #{@databases.join(', ')}" if @databases.present?
+        texts += @workers.map do |worker|
+          str = "worker[#{worker.id}]: #{worker.max_processes} processes, #{worker.max_threads} threads"
+          str += " (#{worker.queues.join(', ')})" if worker.queues.present?
+          str
+        end
+        texts
+      end
     end
   end
 end

@@ -50,14 +50,14 @@ module Delayed
 
       def wait_pid(worker)
         Process.waitpid(worker.pid)
-        @master.logger.debug "found terminated pid: #{worker.pid}"
+        @master.logger.debug { "found terminated pid: #{worker.pid}" }
         @master.remove_worker(worker)
       rescue Errno::ECHILD
-        @master.logger.warn "failed to waitpid: #{worker.pid}"
+        @master.logger.warn { "failed to waitpid: #{worker.pid}" }
         @master.remove_worker(worker)
       rescue => e
-        @master.logger.warn "#{e.class}: #{e.message}"
-        @master.logger.debug e.backtrace.join("\n")
+        @master.logger.warn { "#{e.class}: #{e.message}" }
+        @master.logger.debug { e.backtrace.join("\n") }
       end
     end
   end

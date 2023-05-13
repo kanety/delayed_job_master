@@ -27,10 +27,10 @@ module Delayed
       private
 
       def around_fork(worker)
-        @master.logger.info "forking #{worker.name}..."
+        @master.logger.info { "forking #{worker.name}..." }
         @callbacks.run(:before_fork, @master, worker)
         yield
-        @master.logger.info "forked #{worker.name} with pid #{worker.pid}"
+        @master.logger.info { "forked #{worker.name} with pid #{worker.pid}" }
       end
 
       def after_fork_at_child(worker)

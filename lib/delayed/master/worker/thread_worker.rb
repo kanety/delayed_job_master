@@ -36,7 +36,7 @@ module Delayed
           end
 
           thread_pool.work do |job|
-            @master_logger.debug "start worker thread #{Thread.current.object_id}"
+            @master_logger.debug { "start worker thread #{Thread.current.object_id}" }
             self.class.lifecycle.run_callbacks(:worker_thread, self, job) do
               case run_one_job(job)
               when true
@@ -45,7 +45,7 @@ module Delayed
                 monitor.synchronize { failure += 1 }
               end
             end
-            @master_logger.debug "stop worker thread #{Thread.current.object_id}"
+            @master_logger.debug { "stop worker thread #{Thread.current.object_id}" }
           end
 
           thread_pool.wait

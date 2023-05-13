@@ -26,7 +26,7 @@ module Delayed
       def register_signal(signal, method)
         Signal.trap(signal) do
           Thread.new do
-            @master.logger.info "received #{signal} signal"
+            @master.logger.info { "received #{signal} signal" }
             @master.public_send(method)
           end
         end
@@ -34,9 +34,9 @@ module Delayed
 
       def dispatch_to(signal, pid)
         Process.kill(signal, pid)
-        @master.logger.info "sent #{signal} signal to worker #{pid}"
+        @master.logger.info { "sent #{signal} signal to worker #{pid}" }
       rescue
-        @master.logger.error "failed to send #{signal} signal to worker #{pid}"
+        @master.logger.error { "failed to send #{signal} signal to worker #{pid}" }
       end
     end
   end

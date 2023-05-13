@@ -43,20 +43,20 @@ module Delayed
         private
 
         def listen(database, connection)
-          @master.logger.info "listening @#{database.spec_name}..."
+          @master.logger.info { "listening @#{database.spec_name}..." }
           connection.execute("LISTEN delayed_job_master")
           yield
         rescue => e
-          @master.logger.warn "#{e.class}: #{e.message}"
-          @master.logger.debug e.backtrace.join("\n")
+          @master.logger.warn { "#{e.class}: #{e.message}" }
+          @master.logger.debug { e.backtrace.join("\n") }
         ensure
-          @master.logger.info "unlisten @#{database.spec_name}"
+          @master.logger.info { "unlisten @#{database.spec_name}" }
           connection.execute("UNLISTEN delayed_job_master")
         end
 
         def wait_for_notify(database, connection)
           connection.raw_connection.wait_for_notify(@config.monitor_interval) do |_event, _pid, _payload|
-            @master.logger.info "received notification @#{database.spec_name}"
+            @master.logger.info { "received notification @#{database.spec_name}" }
             @master.job_checker.schedule(database)
           end
         end

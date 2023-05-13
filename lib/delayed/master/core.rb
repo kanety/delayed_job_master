@@ -36,7 +36,7 @@ module Delayed
         print_config
         daemonize if @config.daemon
 
-        @logger.info "started master #{Process.pid}".tap { |msg| puts msg }
+        @logger.info { "started master #{Process.pid}".tap { |msg| puts msg } }
 
         handle_pid_file do
           @signaler.register
@@ -44,7 +44,7 @@ module Delayed
           start
         end
 
-        @logger.info "shut down master"
+        @logger.info { "shut down master" }
       end
 
       def start
@@ -95,14 +95,14 @@ module Delayed
 
       def reopen_files
         @signaler.dispatch(:USR1)
-        @logger.info "reopening files..."
+        @logger.info { "reopening files..." }
         FileReopener.reopen
-        @logger.info "reopened"
+        @logger.info { "reopened" }
       end
 
       def restart
         @signaler.dispatch(:USR2)
-        @logger.info "restarting master..."
+        @logger.info { "restarting master..." }
         exec(*([$0] + ARGV))
       end
 
@@ -126,7 +126,13 @@ module Delayed
         logger.level = log_level
         logger
       end
-    
+
+      def print_config
+        @config.abstract_texts.each do |text|
+          @logger.info { text }
+        end
+      end
+
       def daemonize
         Process.daemon(true)
       end
@@ -144,15 +150,6 @@ module Delayed
 
       def remove_pid_file
         File.delete(@config.pid_file) if File.exist?(@config.pid_file)
-      end
-
-      def print_config
-        @logger.info "databases: #{@config.databases.join(', ')}" if @config.databases.present?
-        @config.worker_settings.each do |setting|
-          message = "worker[#{setting.id}]: #{setting.max_processes} processes, #{setting.max_threads} threads"
-          message += " (#{setting.queues.join(', ')})" if setting.queues.present?
-          @logger.info message
-        end
       end
     end
   end

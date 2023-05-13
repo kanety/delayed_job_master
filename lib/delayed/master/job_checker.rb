@@ -73,12 +73,12 @@ module Delayed
         free_settings = detect_free_settings(database)
         return if free_settings.blank?
 
-        @master.logger.debug "checking jobs @#{database.spec_name}..."
+        @master.logger.debug { "checking jobs @#{database.spec_name}..." }
         settings = check_jobs(database, free_settings)
         fork_workers(database, settings)
       rescue => e
-        @master.logger.warn "#{e.class}: #{e.message}"
-        @master.logger.debug e.backtrace.join("\n")
+        @master.logger.warn { "#{e.class}: #{e.message}" }
+        @master.logger.debug { e.backtrace.join("\n") }
       end
 
       def detect_free_settings(database)
@@ -105,7 +105,7 @@ module Delayed
       def fork_workers(database, settings)
         settings.each do |setting|
           worker = Worker.new(database: database, setting: setting)
-          @master.logger.info "found jobs for #{worker.info}"
+          @master.logger.info { "found jobs for #{worker.info}" }
           Forker.new(@master).call(worker)
           @master.add_worker(worker)
           @master.monitoring.schedule(worker)
