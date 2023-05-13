@@ -67,7 +67,9 @@ module Delayed
       end
 
       def monitor_wait(value = nil)
-        puts "DEPRECATION WARNING: deprecated monitor_wait setting was called from #{caller(1, 1).first}. Use monitor_interval instead."
+        ActiveSupport::Deprecation.warn <<-TEXT.squish
+          deprecated 'monitor_wait' setting was used. Use 'monitor_interval' instead."
+        TEXT
         @monitor_interval = @polling_interval = value
       end
 
