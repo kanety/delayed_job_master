@@ -75,7 +75,10 @@ module Delayed
 
         @master.logger.debug { "checking jobs @#{database.spec_name}..." }
         settings = check_jobs(database, free_settings)
-        fork_workers(database, settings)
+        if settings.present?
+          @master.logger.info { "found jobs for #{settings.uniq.map(&:worker_info).join(', ')}" }
+          fork_workers(database, settings)
+        end
       rescue => e
         @master.logger.warn { "#{e.class}: #{e.message}" }
         @master.logger.debug { e.backtrace.join("\n") }
@@ -105,7 +108,6 @@ module Delayed
       def fork_workers(database, settings)
         settings.each do |setting|
           worker = Worker.new(database: database, setting: setting)
-          @master.logger.info { "found jobs for #{worker.info}" }
           Forker.new(@master).call(worker)
           @master.add_worker(worker)
           @master.monitoring.schedule(worker)

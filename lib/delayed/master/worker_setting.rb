@@ -25,6 +25,16 @@ module Delayed
         end
       end
 
+      def worker_name
+        "worker[#{id}]"
+      end
+
+      def worker_info
+        strs = [worker_name]
+        strs << "(#{@queues.join(', ')})" if @queues.present?
+        strs.join(' ')
+      end
+
       SIMPLE_CONFIGS.each do |key|
         define_method(key) do |*args|
           if args.size > 0

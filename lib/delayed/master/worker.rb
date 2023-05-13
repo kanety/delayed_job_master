@@ -17,10 +17,9 @@ module Delayed
       end
 
       def info
-        str = name
-        str += " @#{@database.spec_name}" if @database
-        str += " (#{@setting.queues.join(', ')})" if @setting.queues.present?
-        str
+        strs = [@setting.worker_info]
+        strs << "@#{@database.spec_name}" if @database
+        strs.join(' ')
       end
 
       def process_title
