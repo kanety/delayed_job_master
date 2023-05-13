@@ -4,6 +4,8 @@ require 'fileutils'
 require 'logger'
 require_relative 'command'
 require_relative 'worker'
+require_relative 'database'
+require_relative 'callbacks'
 require_relative 'monitoring'
 require_relative 'job_checker'
 require_relative 'job_listener'
@@ -13,20 +15,21 @@ require_relative 'file_reopener'
 module Delayed
   module Master
     class Core
-      attr_reader :config, :logger, :databases, :workers
+      attr_reader :config, :logger, :databases, :callbacks, :workers
       attr_reader :monitoring, :job_checker, :job_listener
 
       def initialize(argv)
         @config = Command.new(argv).config
         @logger = setup_logger(@config.log_file, @config.log_level)
-        @databases = Database.all(@config.databases)
         @workers = []
         @mon = Monitor.new
 
-        @signaler = Signaler.new(self)
+        @databases = Database.all(@config.databases)
+        @callbacks = Callbacks.new(@config)
         @monitoring = Monitoring.new(self)
         @job_checker = JobChecker.new(self)
         @job_listener = JobListener.adapter.new(self)
+        @signaler = Signaler.new(self)
       end
 
       def run
@@ -113,10 +116,6 @@ module Delayed
         @mon.synchronize do
           @workers.delete(worker)
         end
-      end
-
-      def run_callbacks(key, *args)
-        @config.send(key)&.to_a.each { |callback| callback.call(*([self] +args)) }
       end
 
       private

@@ -7,7 +7,9 @@ module Delayed
     class Config
       SIMPLE_CONFIGS   = [:daemon, :working_directory, :log_file, :log_level, :pid_file,
                           :monitor_interval, :polling_interval, :databases]
-      CALLBACK_CONFIGS = [:before_fork, :after_fork, :before_monitor, :after_monitor]
+      CALLBACK_CONFIGS = [:before_fork, :after_fork,
+                          :before_monitor, :after_monitor, :around_monitor,
+                          :before_polling, :after_polling, :around_polling]
 
       attr_accessor *SIMPLE_CONFIGS
       attr_accessor *CALLBACK_CONFIGS
@@ -22,10 +24,9 @@ module Delayed
         @monitor_interval = 5
         @polling_interval = 5
         @databases = []
-        @before_fork = []
-        @after_fork = []
-        @before_monitor = []
-        @after_monitor = []        
+        CALLBACK_CONFIGS.each do |name|
+          send("#{name}=", [])
+        end
         @workers = []
         read(file) if file
       end

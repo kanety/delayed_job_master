@@ -71,3 +71,17 @@ end
 
 after_monitor do |master|
 end
+
+around_monitor do |master, &block|
+  block.call
+end
+
+before_polling do |master, database|
+end
+
+after_polling do |master, database|
+end
+
+around_polling do |master, database, &block|
+  block.call
+end

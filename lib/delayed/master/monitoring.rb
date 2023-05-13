@@ -6,6 +6,7 @@ module Delayed
       def initialize(master)
         @master = master
         @config = master.config
+        @callbacks = master.callbacks
         @threads = []
         @mon = Monitor.new
       end
@@ -13,7 +14,7 @@ module Delayed
       def start
         loop do
           break if @master.stop?
-          monitor
+          @callbacks.call(:monitor, @master) {}
           sleep @config.monitor_interval
         end
       end
@@ -46,15 +47,6 @@ module Delayed
       end
 
       private
-
-      def monitor
-        @master.run_callbacks(:before_monitor)
-        yield if block_given?
-        @master.run_callbacks(:after_monitor)
-      rescue => e
-        @master.logger.warn "#{e.class}: #{e.message}"
-        @master.logger.debug e.backtrace.join("\n")
-      end
 
       def wait_pid(worker)
         Process.waitpid(worker.pid)

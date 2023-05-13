@@ -23,23 +23,27 @@ module Delayed
           failure = 0
 
           monitor = Monitor.new
-          thread_pool = ThreadPool.new(@max_threads)
+          thread_pool = ThreadPool.new(self, @max_threads)
 
           thread_pool.schedule do
-            if stop?
-              next nil
-            else
-              next reserve_job
+            self.class.lifecycle.run_callbacks(:scheduler_thread, self) do
+              if stop?
+                next nil
+              else
+                next reserve_job
+              end
             end
           end
 
           thread_pool.work do |job|
             @master_logger.debug "start worker thread #{Thread.current.object_id}"
-            case run_one_job(job)
-            when true
-              monitor.synchronize { success += 1 }
-            when false
-              monitor.synchronize { failure += 1 }
+            self.class.lifecycle.run_callbacks(:worker_thread, self, job) do
+              case run_one_job(job)
+              when true
+                monitor.synchronize { success += 1 }
+              when false
+                monitor.synchronize { failure += 1 }
+              end
             end
             @master_logger.debug "stop worker thread #{Thread.current.object_id}"
           end

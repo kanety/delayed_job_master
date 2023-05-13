@@ -4,7 +4,8 @@ module Delayed
   module Master
     class Worker
       class ThreadPool
-        def initialize(size)
+        def initialize(worker, size)
+          @worker = worker
           @size = size
           @queue = SizedQueue.new(@size)
           @queue_delay = 0.5
@@ -12,7 +13,7 @@ module Delayed
 
         def schedule(&block)
           @scheduler = Thread.new do
-            Rails.application.executor.wrap do
+            Delayed::Worker.lifecycle.run_callbacks(:thread, @worker) do
               loop do
                 while @queue.num_waiting == 0
                   sleep @queue_delay
@@ -33,7 +34,7 @@ module Delayed
         def work(&block)
           @threads = @size.times.map do
             Thread.new do
-              Rails.application.executor.wrap do
+              Delayed::Worker.lifecycle.run_callbacks(:thread, @worker) do
                 loop do
                   item = @queue.pop
                   if item == :exit

@@ -11,6 +11,7 @@ module Delayed
         @master = master
         @config = master.config
         @databases = master.databases
+        @callbacks = master.callbacks
         @queues = @databases.map { |database| [database, Queue.new] }.to_h
         @threads = []
       end
@@ -34,7 +35,9 @@ module Delayed
               if @queues[database].pop == :stop
                 break
               else
-                check(database)
+                @callbacks.call(:polling, @master, database) do
+                  check(database)
+                end
               end
             end
           end
@@ -67,23 +70,18 @@ module Delayed
       private
 
       def check(database)
-        settings = detect_free_worker_settings(database)
-        return if settings.blank?
+        free_settings = detect_free_settings(database)
+        return if free_settings.blank?
 
         @master.logger.debug "checking jobs @#{database.spec_name}..."
-        check_jobs(database, settings).each do |setting|
-          worker = Worker.new(database: database, setting: setting)
-          @master.logger.info "found jobs for #{worker.info}"
-          Forker.new(@master).call(worker)
-          @master.add_worker(worker)
-          @master.monitoring.schedule(worker)
-        end
+        settings = check_jobs(database, free_settings)
+        fork_workers(database, settings)
       rescue => e
         @master.logger.warn "#{e.class}: #{e.message}"
         @master.logger.debug e.backtrace.join("\n")
       end
 
-      def detect_free_worker_settings(database)
+      def detect_free_settings(database)
         @config.worker_settings.each_with_object([]) do |setting, array|
           used_count = @master.workers.count { |worker| worker.setting.queues == setting.queues }
           free_count = setting.max_processes - used_count
@@ -101,6 +99,16 @@ module Delayed
               array << setting
             end
           end
+        end
+      end
+
+      def fork_workers(database, settings)
+        settings.each do |setting|
+          worker = Worker.new(database: database, setting: setting)
+          @master.logger.info "found jobs for #{worker.info}"
+          Forker.new(@master).call(worker)
+          @master.add_worker(worker)
+          @master.monitoring.schedule(worker)
         end
       end
     end

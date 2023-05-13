@@ -54,9 +54,3 @@ end
 after_fork do |master, worker|
   ActiveRecord::Base.establish_connection
 end
-
-before_monitor do |master|
-end
-
-after_monitor do |master|
-end
