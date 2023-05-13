@@ -31,4 +31,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "pg"
   spec.add_development_dependency "mysql2"
   spec.add_development_dependency "delayed_job_active_record", ">= 4.1"
+  spec.add_development_dependency "delayed_job_bulk", ">= 1.0.0"
 end

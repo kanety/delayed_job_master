@@ -79,7 +79,7 @@ describe Delayed::Master do
     it 'runs multiple workers with different queues' do
       tester.start do |master|
         tester.enqueue_timer_job(queue: 'queue1')
-        tester.enqueue_timer_job(queue: 'queue2')
+        tester.enqueue_timer_job(queue: 'queue2', count: 5)
         tester.wait_job_performing
         expect(master.workers.size).to eq(2)
         tester.wait_job_performed

@@ -28,9 +28,6 @@ module Delayed
       def around_fork(worker)
         @master.logger.info "forking #{worker.name}..."
         @master.run_callbacks(:before_fork, worker)
-        @databases.each do |database|
-          database.model.connection_pool.disconnect!
-        end
         yield
         @master.logger.info "forked #{worker.name} with pid #{worker.pid}"
       end

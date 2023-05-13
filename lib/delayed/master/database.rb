@@ -18,6 +18,12 @@ module Delayed
         end
       end
 
+      def with_connection
+        model.connection_pool.with_connection do |connection|
+          yield connection
+        end
+      end
+
       private
 
       def cache_model
@@ -25,13 +31,13 @@ module Delayed
       end
 
       def define_model
-        klass = Class.new(Delayed::Job)
-        klass_name = "DelayedJob#{@spec_name.capitalize}"
-        unless Delayed::Master.const_defined?(klass_name)
-          Delayed::Master.const_set(klass_name, klass)
-          Delayed::Master.const_get(klass_name).establish_connection(@spec_name)
+        model = Class.new(Delayed::Job)
+        model_name = "DelayedJob#{@spec_name.capitalize}"
+        unless Delayed::Master.const_defined?(model_name)
+          Delayed::Master.const_set(model_name, model)
+          Delayed::Master.const_get(model_name).establish_connection(@spec_name)
         end
-        Delayed::Master.const_get(klass_name)
+        Delayed::Master.const_get(model_name)
       end
 
       class << self

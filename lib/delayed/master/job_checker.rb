@@ -11,29 +11,57 @@ module Delayed
         @master = master
         @config = master.config
         @databases = master.databases
+        @queues = @databases.map { |database| [database, Queue.new] }.to_h
+        @threads = []
       end
 
       def start
-        @thread = Thread.new do
+        @threads << Thread.new do
           loop do
             if @master.stop?
+              stop
               break
             else
-              @databases.each do |database|
-                check(database)
-              end
+              schedule(@databases)
             end
             sleep @config.polling_interval
           end
         end
+
+        @threads += @databases.map do |database|
+          Thread.new(database) do |database|
+            loop do
+              if @queues[database].pop == :stop
+                break
+              else
+                check(database)
+              end
+            end
+          end
+        end
+      end
+
+      def stop
+        @databases.each do |database|
+          queue = @queues[database]
+          queue.clear
+          queue.push(:stop)
+        end
+      end
+
+      def schedule(databases)
+        Array(databases).each do |database|
+          queue = @queues[database]
+          queue.push(database) if queue.size == 0
+        end
       end
 
       def wait
-        @thread&.join
+        @threads.each(&:join)
       end
 
       def shutdown
-        @thread&.kill
+        @threads.each(&:kill)
       end
 
       private

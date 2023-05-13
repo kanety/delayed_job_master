@@ -5,7 +5,9 @@ require 'active_job/railtie'
 
 require 'delayed_job'
 require 'delayed_job_active_record'
+require 'delayed_job_bulk'
 Bundler.require(*Rails.groups)
+require 'delayed/master'
 
 module Dummy
   class Application < Rails::Application
@@ -16,4 +18,8 @@ module Dummy
     database += "_multi" if ENV['DATABASE_CONFIG'] == 'multi'
     config.paths["config/database"] = "config/#{database}.yml"
   end
+end
+
+DelayedJobMaster.configure do |config|
+  config.listen = :postgresql if ENV['DATABASE'].in?([nil, 'postgresql'])
 end

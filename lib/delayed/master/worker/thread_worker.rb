@@ -34,12 +34,14 @@ module Delayed
           end
 
           thread_pool.work do |job|
+            @master_logger.debug "start worker thread #{Thread.current.object_id}"
             case run_one_job(job)
             when true
               monitor.synchronize { success += 1 }
             when false
               monitor.synchronize { failure += 1 }
             end
+            @master_logger.debug "stop worker thread #{Thread.current.object_id}"
           end
 
           thread_pool.wait

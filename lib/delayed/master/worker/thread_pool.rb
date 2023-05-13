@@ -7,7 +7,7 @@ module Delayed
         def initialize(size)
           @size = size
           @queue = SizedQueue.new(@size)
-          @queue_delay = 0.1
+          @queue_delay = 0.5
         end
 
         def schedule(&block)
