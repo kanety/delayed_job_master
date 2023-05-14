@@ -15,17 +15,10 @@ module Delayed
           @threads = @databases.map do |database|
             Thread.new(database) do |database|
               loop do
-                break if @master.stop?
-                database.with_connection do |connection|
-                  listen(database, connection) do
-                    loop do
-                      if @master.stop?
-                        break
-                      else
-                        wait_for_notify(database, connection)
-                      end
-                    end
-                  end
+                if @master.stop?
+                  break
+                else
+                  listen(database)
                 end
               end
             end
@@ -42,7 +35,21 @@ module Delayed
 
         private
 
-        def listen(database, connection)
+        def listen(database)
+          database.with_connection do |connection|
+            listen_connection(database, connection) do
+              loop do
+                if @master.stop?
+                  break
+                else
+                  wait_for_notify(database, connection)
+                end
+              end
+            end
+          end
+        end
+
+        def listen_connection(database, connection)
           @master.logger.info { "listening @#{database.spec_name}..." }
           connection.execute("LISTEN delayed_job_master")
           yield
@@ -55,7 +62,7 @@ module Delayed
         end
 
         def wait_for_notify(database, connection)
-          connection.raw_connection.wait_for_notify(@config.monitor_interval) do |_event, _pid, _payload|
+          connection.raw_connection.wait_for_notify(1) do |_event, _pid, _payload|
             @master.logger.info { "received notification @#{database.spec_name}" }
             @master.job_checker.schedule(database)
           end

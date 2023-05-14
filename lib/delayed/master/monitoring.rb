@@ -1,8 +1,12 @@
 # frozen_string_literal: true
 
+require_relative 'sleep'
+
 module Delayed
   module Master
     class Monitoring
+      include Sleep
+
       def initialize(master)
         @master = master
         @config = master.config
@@ -12,10 +16,12 @@ module Delayed
       end
 
       def start
-        loop do
-          break if @master.stop?
-          @callbacks.call(:monitor, @master) {}
-          sleep @config.monitor_interval
+        loop_with_sleep @config.monitor_interval do |i|
+          if @master.stop?
+            break
+          elsif i == 0
+            @callbacks.call(:monitor, @master) {}
+          end 
         end
       end
 

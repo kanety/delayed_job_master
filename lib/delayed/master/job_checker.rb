@@ -3,10 +3,13 @@
 require_relative 'database'
 require_relative 'forker'
 require_relative 'job_finder'
+require_relative 'sleep'
 
 module Delayed
   module Master
     class JobChecker
+      include Sleep
+
       def initialize(master)
         @master = master
         @config = master.config
@@ -18,14 +21,13 @@ module Delayed
 
       def start
         @threads << Thread.new do
-          loop do
+          loop_with_sleep @config.polling_interval do |i|
             if @master.stop?
               stop
               break
-            else
+            elsif i == 0
               schedule(@databases)
             end
-            sleep @config.polling_interval
           end
         end
 
