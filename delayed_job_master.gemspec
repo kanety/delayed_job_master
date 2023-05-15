@@ -1,11 +1,11 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'delayed/master/version'
+require 'delayed_job_master/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "delayed_job_master"
-  spec.version       = Delayed::Master::VERSION
+  spec.version       = DelayedJobMaster::VERSION
   spec.authors       = ["Yoshikazu Kaneta"]
   spec.email         = ["kaneta@sitebridge.co.jp"]
   spec.summary       = %q{A simple delayed_job master process to control multiple workers}

@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'optparse'
-require_relative 'version'
 require_relative 'config'
 
 module Delayed
@@ -14,7 +13,7 @@ module Delayed
 
         OptionParser.new { |opt|
           opt.banner = <<-EOS
-            #{File.basename($PROGRAM_NAME)} #{Delayed::Master::VERSION}
+            #{File.basename($PROGRAM_NAME)} #{DelayedJobMaster::VERSION}
             Usage: #{File.basename($PROGRAM_NAME)} [options]
           EOS
 
