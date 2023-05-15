@@ -20,7 +20,14 @@ module Delayed
       end
 
       def start
-        @threads << Thread.new do
+        @threads << start_scheduler_thread
+        @threads += @databases.map do |database|
+          start_checker_thread(database)
+        end
+      end
+
+      def start_scheduler_thread
+        Thread.new do
           loop_with_sleep @config.polling_interval do |i|
             if @master.stop?
               stop
@@ -30,16 +37,16 @@ module Delayed
             end
           end
         end
+      end
 
-        @threads += @databases.map do |database|
-          Thread.new(database) do |database|
-            loop do
-              if @queues[database].pop == :stop
-                break
-              else
-                @callbacks.call(:polling, @master, database) do
-                  check(database)
-                end
+      def start_checker_thread(database)
+        Thread.new(database) do |database|
+          loop do
+            if @queues[database].pop == :stop
+              break
+            else
+              @callbacks.call(:polling, @master, database) do
+                check(database)
               end
             end
           end

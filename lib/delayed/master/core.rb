@@ -28,7 +28,7 @@ module Delayed
         @callbacks = Callbacks.new(@config)
         @monitoring = Monitoring.new(self)
         @job_checker = JobChecker.new(self)
-        @job_listener = JobListener.adapter.new(self)
+        @job_listener = JobListener.klass.new(self)
         @signaler = Signaler.new(self)
       end
 

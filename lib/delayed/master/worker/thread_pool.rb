@@ -11,7 +11,7 @@ module Delayed
           @queue_delay = 0.5
         end
 
-        def schedule(&block)
+        def schedule
           @scheduler = Thread.new do
             Delayed::Worker.lifecycle.run_callbacks(:thread, @worker) do
               loop do
@@ -19,7 +19,7 @@ module Delayed
                   sleep @queue_delay
                 end
 
-                if item = block.call
+                if item = yield
                   @queue.push(item)
                   Thread.pass
                 else
@@ -31,7 +31,7 @@ module Delayed
           end
         end
 
-        def work(&block)
+        def work
           @threads = @size.times.map do
             Thread.new do
               Delayed::Worker.lifecycle.run_callbacks(:thread, @worker) do
@@ -40,7 +40,7 @@ module Delayed
                   if item == :exit
                     break
                   else
-                    block.call(item)
+                    yield item
                   end
                 end
               end

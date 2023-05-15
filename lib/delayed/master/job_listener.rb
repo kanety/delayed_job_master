@@ -16,8 +16,8 @@ module Delayed
       end
 
       class << self
-        def adapter
-          case DelayedJobMaster.config.listen
+        def klass
+          case DelayedJobMaster.config.listener
           when :postgresql
             require_relative 'postgresql/job_listener'
             Postgresql::JobListener

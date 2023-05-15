@@ -8,13 +8,14 @@ module Delayed
       def initialize(master)
         @master = master
         @config = master.config
-        @databases = master.databases
         @callbacks = master.callbacks
       end
 
       def call(worker)
         around_fork(worker) do
+          @callbacks.run(:before_fork, @master, worker)
           worker.pid = fork do
+            @callbacks.run(:after_fork, @master, worker)
             after_fork_at_child(worker)
             worker.pid = Process.pid
             worker.instance = create_instance(worker)
@@ -28,14 +29,12 @@ module Delayed
 
       def around_fork(worker)
         @master.logger.info { "forking #{worker.name}..." }
-        @callbacks.run(:before_fork, @master, worker)
         yield
         @master.logger.info { "forked #{worker.name} with pid #{worker.pid}" }
       end
 
       def after_fork_at_child(worker)
         FileReopener.reopen
-        @callbacks.run(:after_fork, @master, worker)
       end
 
       def create_instance(worker)

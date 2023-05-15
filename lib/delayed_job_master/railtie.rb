@@ -1,7 +1,7 @@
 module DelayedJobMaster
   class Railtie < Rails::Railtie
     config.after_initialize do
-      case DelayedJobMaster.config.listen
+      case DelayedJobMaster.config.listener
       when :postgresql
         require_relative '../delayed/master/postgresql/job_notifier'
         if defined?(Delayed::Backend::ActiveRecord)

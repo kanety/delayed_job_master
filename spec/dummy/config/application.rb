@@ -21,5 +21,9 @@ module Dummy
 end
 
 DelayedJobMaster.configure do |config|
-  config.listen = :postgresql if ENV['DATABASE'].in?([nil, 'postgresql'])
+  if ENV['DATABASE'].in?([nil, 'postgresql'])
+    config.listener = :postgresql
+  else
+    config.listener = nil
+  end
 end

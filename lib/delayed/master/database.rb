@@ -62,7 +62,7 @@ module Delayed
         end
 
         def exist_delayed_job_table?(spec_name)
-          new(spec_name).model.connection_pool.with_connection do |connection|
+          new(spec_name).with_connection do |connection|
             connection.tables.include?('delayed_jobs')
           end
         end
