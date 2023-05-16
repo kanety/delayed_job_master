@@ -118,7 +118,7 @@ module Delayed
         settings.each do |setting|
           worker = Worker.new(database: database, setting: setting)
           Forker.new(@master).call(worker)
-          @master.add_worker(worker)
+          @master.workers << worker
           @master.monitoring.schedule(worker)
         end
       end

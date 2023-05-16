@@ -2,6 +2,7 @@
 
 require 'fileutils'
 require 'logger'
+require_relative 'safe_array'
 require_relative 'command'
 require_relative 'worker'
 require_relative 'database'
@@ -21,8 +22,7 @@ module Delayed
       def initialize(argv)
         @config = Command.new(argv).config
         @logger = setup_logger(@config.log_file, @config.log_level)
-        @workers = []
-        @mon = Monitor.new
+        @workers = SafeArray.new
 
         @databases = Database.all(@config.databases)
         @callbacks = Callbacks.new(@config)
@@ -104,18 +104,6 @@ module Delayed
         @signaler.dispatch(:USR2)
         @logger.info { "restarting master..." }
         exec(*([$0] + ARGV))
-      end
-
-      def add_worker(worker)
-        @mon.synchronize do
-          @workers << worker
-        end
-      end
-
-      def remove_worker(worker)
-        @mon.synchronize do
-          @workers.delete(worker)
-        end
       end
 
       private

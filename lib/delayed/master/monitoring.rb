@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative 'safe_array'
 require_relative 'sleep'
 
 module Delayed
@@ -11,8 +12,7 @@ module Delayed
         @master = master
         @config = master.config
         @callbacks = master.callbacks
-        @threads = []
-        @mon = Monitor.new
+        @threads = SafeArray.new
       end
 
       def start
@@ -26,21 +26,9 @@ module Delayed
       end
 
       def schedule(worker)
-        add_thread(Thread.new do
+        @threads << Thread.new do
           wait_pid(worker)
-          remove_thread(Thread.current)
-        end)
-      end
-
-      def add_thread(thread)
-        @mon.synchronize do
-          @threads << thread
-        end
-      end
-
-      def remove_thread(thread)
-        @mon.synchronize do
-          @threads.delete_if { |t| t == thread }
+          @threads.delete(Thread.current)
         end
       end
 
@@ -57,10 +45,10 @@ module Delayed
       def wait_pid(worker)
         Process.waitpid(worker.pid)
         @master.logger.debug { "found terminated pid: #{worker.pid}" }
-        @master.remove_worker(worker)
+        @master.workers.delete(worker)
       rescue Errno::ECHILD
         @master.logger.warn { "failed to waitpid: #{worker.pid}" }
-        @master.remove_worker(worker)
+        @master.workers.delete(worker)
       rescue => e
         @master.logger.warn { "#{e.class}: #{e.message}" }
         @master.logger.debug { e.backtrace.join("\n") }
