@@ -32,7 +32,6 @@ describe Delayed::Worker do
   it 'checks memory usage' do
     tester.start(max_memory: 1) do |worker|
       tester.enqueue_timer_job(queue: 'worker_test', count: 2)
-      tester.wait_job_performing
       tester.wait_worker_stopped
       expect(Delayed::Job.count).to eq(1)
     end

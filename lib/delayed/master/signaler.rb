@@ -3,13 +3,21 @@
 module Delayed
   module Master
     class Signaler
+      SIGNAL_HANDLERS = [
+        [:TERM, :stop],
+        [:INT, :stop],
+        [:QUIT, :quit],
+        [:WINCH, :graceful_stop],
+        [:USR1, :reopen_files],
+        [:USR2, :restart]
+      ]
+
       def initialize(master)
         @master = master
       end
 
       def register
-        signals = [[:TERM, :stop], [:INT, :stop], [:QUIT, :quit], [:USR1, :reopen_files], [:USR2, :restart]]
-        signals.each do |signal, method|
+        SIGNAL_HANDLERS.each do |signal, method|
           register_signal(signal, method)
         end
       end

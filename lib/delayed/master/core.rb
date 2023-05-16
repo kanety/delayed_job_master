@@ -41,37 +41,30 @@ module Delayed
         handle_pid_file do
           @signaler.register
           @prepared = true
+
           start
+          wait
+          shutdown
         end
 
         @logger.info { "shut down master" }
       end
 
       def start
-        start_job_checker do
-          start_job_listener do
-            start_monitoring
-          end
-        end
-      end
-
-      def start_job_checker
         @job_checker.start
-        yield
-        @job_checker.wait
-        @job_checker.shutdown
+        @job_listener.start
+        @monitoring.start
       end
 
-      def start_job_listener
-        @job_listener.start
-        yield
+      def wait
+        @job_checker.wait
         @job_listener.wait
-        @job_listener.shutdown
-      end
-      
-      def start_monitoring
-        @monitoring.start
         @monitoring.wait
+      end
+
+      def shutdown
+        @job_checker.shutdown
+        @job_listener.shutdown
         @monitoring.shutdown
       end
 
@@ -81,10 +74,19 @@ module Delayed
 
       def quit
         @signaler.dispatch(:KILL)
+        shutdown
+        @workers.clear
         @stop = true
       end
 
       def stop
+        @signaler.dispatch(:TERM)
+        shutdown
+        @workers.clear
+        @stop = true
+      end
+
+      def graceful_stop
         @signaler.dispatch(:TERM)
         @stop = true
       end

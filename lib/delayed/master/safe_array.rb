@@ -19,6 +19,12 @@ module Delayed
           super
         end
       end
+
+      def clear
+        @mon.synchronize do
+          super
+        end
+      end
     end
   end
 end

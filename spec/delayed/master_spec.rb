@@ -34,6 +34,19 @@ describe Delayed::Master do
       end
     end
 
+    it 'traps WINCH' do
+      tester.start do |master|
+        tester.enqueue_timer_job(queue: 'queue1')
+        tester.wait_job_performing
+        expect(master.workers.size).to eq(1)
+
+        tester.kill(:WINCH)
+        tester.wait_job_performed
+        tester.wait_worker_terminated
+        expect(master.stop?).to eq(true)
+      end
+    end
+
     it 'traps QUIT' do
       tester.start do |master|
         tester.enqueue_timer_job(queue: 'queue1')
@@ -41,9 +54,9 @@ describe Delayed::Master do
         expect(master.workers.size).to eq(1)
 
         tester.kill(:QUIT)
-        tester.wait_job_performed
         tester.wait_worker_terminated
         expect(master.stop?).to eq(true)
+        expect(Delayed::Job.count).to eq(1)
       end
     end
 

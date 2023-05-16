@@ -16,12 +16,14 @@ module Delayed
       end
 
       def start
-        loop_with_sleep @config.monitor_interval do |i|
-          if @master.stop?
-            break
-          elsif i == 0
-            @callbacks.call(:monitor, @master) {}
-          end 
+        @threads << Thread.new do
+          loop_with_sleep @config.monitor_interval do |i|
+            if @master.stop?
+              break
+            elsif i == 0
+              @callbacks.call(:monitor, @master) {}
+            end
+          end
         end
       end
 
