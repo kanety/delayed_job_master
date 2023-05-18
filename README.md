@@ -4,26 +4,26 @@ A simple delayed_job master process to control multiple workers.
 
 ## Features
 
-* Preload application and fork workers fastly.
-* Monitor job queues and fork new workers on demand.
-* Trap signals to restart / reopen log files.
-* Support multiple databases.
+* Support concurrent workers with multiprocess and multithread.
+* Preload application and fork worker processes on demand.
+* Check memory usage after processing a job to kill workers consuming large memory.
+* Support signals for restarting master process / reopening log files.
+* Check new jobs by polling multiple databases having delayed_jobs table.
+* Detect new jobs quickly by using listen/notify feature. (only postgresql)
 
 ## Dependencies
 
-* ruby 2.3+
+* ruby 2.7+
+* activesupport 6.0+
 * delayed_job 4.1
-
-## Supported delayed_job backends
-
-* delayed_job_active_record 4.1
+* delayed_job_active_record 4.1 (execlude sqlite)
 
 ## Installation
 
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'delayed_job_master', require: false
+gem 'delayed_job_master'
 ```
 
 And then execute:
@@ -36,7 +36,7 @@ Generate `bin/delayed_job_master` and `config/delayed_job_master.rb`:
 
     $ rails generate delayed_job_master:config
 
-## Configuration
+## Configurations
 
 Edit `config/delayed_job_master.rb`:
 
@@ -44,8 +44,11 @@ Edit `config/delayed_job_master.rb`:
 # working directory
 working_directory Dir.pwd
 
-# monitor wait time in second
-monitor_wait 5
+# monitor interval for events (in seconds)
+monitor_interval 5
+
+# polling interval for new jobs (in seconds)
+polling_interval 5
 
 # path to pid file
 pid_file "#{Dir.pwd}/tmp/pids/delayed_job_master.pid"
@@ -56,16 +59,19 @@ log_file "#{Dir.pwd}/log/delayed_job_master.log"
 # log level
 log_level :info
 
-# databases for checking queued jobs if you have multiple databases
-# databases [:production]
+# databases for checking new jobs in case multiple databases
+# databases [:primary, :secondary]
 
 # worker1
 add_worker do |worker|
   # queue name for the worker
   worker.queues %w(queue1)
 
-  # worker count
-  worker.count 1
+  # max process count
+  worker.max_processes 1
+
+  # max thread count for each worker
+  worker.max_threads 1
 
   # max memory in MB
   worker.max_memory 300
@@ -83,22 +89,27 @@ end
 # worker2
 add_worker do |worker|
   worker.queues %w(queue2)
-  worker.count 2
+  worker.max_processes 2
+  worker.max_threads 2
 end
 
 before_fork do |master, worker|
-  Delayed::Worker.before_fork if defined?(Delayed::Worker)
+  ActiveRecord::Base.connection.disconnect!
 end
 
 after_fork do |master, worker|
-  Delayed::Worker.after_fork if defined?(Delayed::Worker)
+  ActiveRecord::Base.establish_connection
 end
+```
 
-before_monitor do |master|
-  ActiveRecord::Base.connection.verify! if defined?(ActiveRecord::Base)
-end
+### Listen/notify
 
-after_monitor do |master|
+Listen/notify feature is enabled by default if `pg` gem is detected.
+To disable this feature, put `config/initializers/delayed_job_master.rb` as follows:
+
+```ruby
+DelayedJobMaster.configure do |config|
+  config.listener = nil
 end
 ```
 
@@ -113,11 +124,15 @@ Command line options:
 * -c, --config: Specify configuration file.
 * -D, --daemon: Start master as a daemon.
 
-Stop master and workers gracefully:
+Stop master immediately, stop workers gracefully:
 
     $ kill -TERM `cat tmp/pids/delayed_job_master.pid`
 
-Stop master and workers forcefully:
+Stop master and workers gracefully:
+
+    $ kill -WINCH `cat tmp/pids/delayed_job_master.pid`
+
+Stop master and workers immediately:
 
     $ kill -QUIT `cat tmp/pids/delayed_job_master.pid`
 
@@ -125,31 +140,30 @@ Reopen log files:
 
     $ kill -USR1 `cat tmp/pids/delayed_job_master.pid`
 
-Restart gracefully:
+Restart master immediately, stop workers gracefully:
 
     $ kill -USR2 `cat tmp/pids/delayed_job_master.pid`
 
 Workers handle each signal as follows:
 
-* TERM: Workers stop after finishing current jobs.
+* TERM/WINCH/USR2: Workers stop after finishing current jobs.
 * QUIT: Workers are killed immediately.
 * USR1: Workers reopen log files.
-* USR2: New workers start, old workers stop after finishing current jobs.
 
-## Worker status
+### Worker status
 
 `ps` command shows worker status as follows:
 
 ```
 $ ps aux
-... delayed_job.0: worker[0] (queue1) [BUSY]  # BUSY process is currently proceeding some jobs
+... delayed_job: worker[0] (queue1) [BUSY]  # BUSY process is currently proceeding some jobs
 ```
 
 After graceful restart, you may find OLD process.
 
 ```
 $ ps aux
-... delayed_job.0: worker[0] (queue1) [BUSY] [OLD]  # OLD process will stop after finishing current jobs.
+... delayed_job: worker[0] (queue1) [BUSY] [OLD]  # OLD process will stop after finishing current jobs.
 ```
 
 ## Contributing
@@ -159,4 +173,3 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/kanety
 ## License
 
 The gem is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
-

@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 3.0.0
+
+* Add multithread feature for workers.
+* Add graceful stop feature by WINCH signal.
+* Add command line options.
+* Add listen/notify feature for postgresql.
+* Support multiple callbacks.
+* Separate waitpid thread and job checker thread.
+* Rename some configurations (`worker.count` to `worker.max_processes`, `monitor_wait` to `monitor_interval`).
+* Use LIMIT query instead of COUNT query for finding jobs.
+* Patch default SQL of delayed_job for postgresql.
+* Drop support for ruby < 2.7 and rails < 6.0.
+
 ## 2.0.3
 
 * Fix database config detection for rails 7.0.
