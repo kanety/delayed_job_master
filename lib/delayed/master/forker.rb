@@ -19,7 +19,6 @@ module Delayed
             after_fork_at_child(worker)
             worker.pid = Process.pid
             worker.instance = create_instance(worker)
-            $0 = worker.process_title
             worker.instance.start
           end
         end
@@ -34,6 +33,8 @@ module Delayed
       end
 
       def after_fork_at_child(worker)
+        $0 = worker.process_title
+        Thread.current.name = 'delayed_job'
         FileReopener.reopen
       end
 
