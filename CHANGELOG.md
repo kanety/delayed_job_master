@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.0.1
+
+* Fix title of forked process.
+
 ## 3.0.0
 
 * Add multithread feature for workers.
