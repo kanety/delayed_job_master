@@ -89,6 +89,30 @@ describe Delayed::Master do
   end
 
   context 'workers' do
+    it 'runs immediate jobs' do
+      tester.start do |master|
+        tester.enqueue_timer_job(queue: 'queue1')
+        tester.wait_job_performing
+        expect(master.workers.size).to eq(1)
+        tester.wait_job_performed
+        tester.wait_worker_terminated
+      end
+
+      expect(Delayed::Job.count).to eq(0)
+    end
+
+    it 'runs future jobs' do
+      tester.start do |master|
+        tester.enqueue_timer_job(queue: 'queue1', wait_until: 1.5.seconds.after)
+        tester.wait_job_performing
+        expect(master.workers.size).to eq(1)
+        tester.wait_job_performed
+        tester.wait_worker_terminated
+      end
+
+      expect(Delayed::Job.count).to eq(0)
+    end
+
     it 'runs multiple workers with different queues' do
       tester.start do |master|
         tester.enqueue_timer_job(queue: 'queue1')

@@ -16,7 +16,9 @@ module Delayed
         @databases = master.databases
         @callbacks = master.callbacks
         @queues = @databases.map { |database| [database, Queue.new] }.to_h
-        @threads = []
+        @threads = SafeArray.new
+        @timer_threads = SafeArray.new
+        @job_finder = JobFinder.new(master)
       end
 
       def start
@@ -53,6 +55,14 @@ module Delayed
         end
       end
 
+      def start_timer_thread(database, run_at)
+        @timer_threads << Thread.new(database, run_at) do |database, run_at|
+          sleep run_at.to_f - Time.zone.now.to_f
+          schedule(database)
+          @timer_threads.delete(Thread.current)
+        end
+      end
+
       def stop
         @databases.each do |database|
           queue = @queues[database]
@@ -70,56 +80,61 @@ module Delayed
 
       def wait
         @threads.each(&:join)
+        @timer_threads.each(&:join)
       end
 
       def shutdown
         @threads.each(&:kill)
+        @timer_threads.each(&:kill)
       end
 
       private
 
       def check(database)
-        free_settings = detect_free_settings(database)
-        return if free_settings.blank?
-
         @master.logger.debug { "checking jobs @#{database.spec_name}..." }
-        settings = check_jobs(database, free_settings)
-        if settings.present?
-          @master.logger.info { "found jobs for #{settings.uniq.map(&:worker_info).join(', ')}" }
-          fork_workers(database, settings)
-        end
+        check_jobs(database)
+        check_next_run_at(database)
       rescue => e
         @master.logger.warn { "#{e.class}: #{e.message}" }
         @master.logger.debug { e.backtrace.join("\n") }
       end
 
-      def detect_free_settings(database)
-        @config.worker_settings.each_with_object([]) do |setting, array|
-          used_count = @master.workers.count { |worker| worker.setting.queues == setting.queues }
+      def check_jobs(database)
+        settings = count_runnable_settings(database)
+        settings.each do |setting, count|
+          @master.logger.info { "found jobs @#{database.spec_name} for #{setting.worker_info}" }
+          count.times { fork_worker(database, setting) }
+        end
+      end
+
+      def count_runnable_settings(database)
+        free_settings = count_free_settings
+        free_settings.map do |setting, free_count|
+          ids = @job_finder.call(database, setting)
+          count = [ids.size, free_count].min
+          [setting, count] if count > 0
+        end.compact
+      end
+
+      def count_free_settings
+        @config.worker_settings.map do |setting|
+          used_count = @master.workers.count { |worker| worker.setting == setting }
           free_count = setting.max_processes - used_count
-          array << [setting, free_count] if free_count > 0
-        end
+          [setting, free_count] if free_count > 0
+        end.compact.to_h
       end
 
-      def check_jobs(database, settings)
-        finder = JobFinder.new(database.model)
-
-        settings.each_with_object([]) do |(setting, free_count), array|
-          job_ids = finder.call(setting, free_count)
-          if job_ids.size > 0
-            [free_count, job_ids.size].min.times do
-              array << setting
-            end
-          end
-        end
+      def fork_worker(database, setting)
+        worker = Worker.new(database: database, setting: setting)
+        Forker.new(@master).call(worker)
+        @master.workers << worker
+        @master.monitoring.schedule(worker)
       end
 
-      def fork_workers(database, settings)
-        settings.each do |setting|
-          worker = Worker.new(database: database, setting: setting)
-          Forker.new(@master).call(worker)
-          @master.workers << worker
-          @master.monitoring.schedule(worker)
+      def check_next_run_at(database)
+        if next_run_at = @job_finder.next_run_at(database)
+          @master.logger.info { "set timer to #{next_run_at.iso8601(6)} @#{database.spec_name}" }
+          start_timer_thread(database, next_run_at)
         end
       end
     end

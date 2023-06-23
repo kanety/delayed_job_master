@@ -20,8 +20,7 @@ class BaseTester
     model.transaction do
       count = options.delete(:count) || 1
       count.times do
-        job = TimerJob.new(2)
-        model.enqueue(ActiveJob::QueueAdapters::DelayedJobAdapter::JobWrapper.new(job.serialize), options)
+        TimerJob.set(options).perform_later(2)
       end
     end
   end
