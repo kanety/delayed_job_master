@@ -48,7 +48,7 @@ working_directory Dir.pwd
 monitor_interval 5
 
 # polling interval for new jobs (in seconds)
-polling_interval 5
+polling_interval 30
 
 # path to pid file
 pid_file "#{Dir.pwd}/tmp/pids/delayed_job_master.pid"

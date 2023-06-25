@@ -22,7 +22,7 @@ module Delayed
         @log_file = "#{@working_directory}/log/delayed_job_master.log"
         @log_level = :info
         @monitor_interval = 5
-        @polling_interval = 5
+        @polling_interval = 30
         @databases = []
         CALLBACK_CONFIGS.each do |name|
           send("#{name}=", [])
