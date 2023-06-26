@@ -93,27 +93,25 @@ module Delayed
       def check(database)
         @master.logger.debug { "checking jobs @#{database.spec_name}..." }
         check_jobs(database)
-        check_next_run_at(database)
+        check_recent_jobs(database)
       rescue => e
         @master.logger.warn { "#{e.class}: #{e.message}" }
         @master.logger.debug { e.backtrace.join("\n") }
       end
 
       def check_jobs(database)
-        settings = count_runnable_settings(database)
-        settings.each do |setting, count|
-          @master.logger.info { "found jobs @#{database.spec_name} for #{setting.worker_info}" }
-          count.times { fork_worker(database, setting) }
+        jobs = find_jobs(database)
+        jobs.each do |job|
+          @master.logger.info { "found jobs @#{job.database.spec_name} for #{job.setting.worker_info}" }
+          fork_worker(job.database, job.setting)
         end
       end
 
-      def count_runnable_settings(database)
+      def find_jobs(database)
         free_settings = count_free_settings
         free_settings.map do |setting, free_count|
-          ids = @job_finder.call(database, setting)
-          count = [ids.size, free_count].min
-          [setting, count] if count > 0
-        end.compact
+          @job_finder.ready_jobs(database, setting, free_count)
+        end.flatten
       end
 
       def count_free_settings
@@ -131,10 +129,11 @@ module Delayed
         @master.monitoring.schedule(worker)
       end
 
-      def check_next_run_at(database)
-        if next_run_at = @job_finder.next_run_at(database)
-          @master.logger.info { "set timer to #{next_run_at.iso8601(6)} @#{database.spec_name}" }
-          start_timer_thread(database, next_run_at)
+      def check_recent_jobs(database)
+        jobs = @job_finder.recent_jobs(database)
+        jobs.each do |job|
+          @master.logger.info { "set timer to #{job.run_at.iso8601(6)} @#{job.database.spec_name}" }
+          start_timer_thread(job.database, job.run_at)
         end
       end
     end

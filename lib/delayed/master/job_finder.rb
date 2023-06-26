@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'job'
+
 # JobFinder runs SQL query which is almost same as delayed_job_active_record.
 # See https://github.com/collectiveidea/delayed_job_active_record/blob/master/lib/delayed/backend/active_record.rb
 module Delayed
@@ -9,12 +11,16 @@ module Delayed
         @config = master.config
       end
 
-      def call(database, setting)
-        ready_scope(database, setting).limit(setting.max_processes).pluck(:id)
+      def ready_jobs(database, setting, limit)
+        ready_scope(database, setting).limit(limit).pluck(:id, :run_at).map do |id, run_at|
+          Job.new(database: database, setting: setting, id: id, run_at: run_at)
+        end
       end
 
-      def next_run_at(database)
-        recent_scope(database).order(:run_at).limit(1).pluck(:run_at).first
+      def recent_jobs(database)
+        recent_scope(database).order(:run_at).limit(1).pluck(:id, :run_at).map do |id, run_at|
+          Job.new(database: database, id: id, run_at: run_at)
+        end
       end
 
       private
