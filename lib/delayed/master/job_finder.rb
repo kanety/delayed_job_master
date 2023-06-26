@@ -11,16 +11,42 @@ module Delayed
         @config = master.config
       end
 
-      def ready_jobs(database, setting, limit)
-        ready_scope(database, setting).limit(limit).pluck(:id, :run_at).map do |id, run_at|
-          Job.new(database: database, setting: setting, id: id, run_at: run_at)
+      def ready_jobs(databases, setting, limit)
+        jobs = SafeArray.new
+
+        threads = databases.map do |database|
+          Thread.new(database) do |database|
+            database.with_connection do
+              ready_scope(database, setting).limit(limit).pluck(:id, :run_at).each do |id, run_at|
+                jobs << Job.new(database: database, setting: setting, id: id, run_at: run_at)
+              end
+            end
+          end
         end
+
+        threads.each(&:join)
+        threads.each(&:kill)
+
+        jobs.sort_by(&:run_at).take(limit)
       end
 
-      def recent_jobs(database)
-        recent_scope(database).order(:run_at).limit(1).pluck(:id, :run_at).map do |id, run_at|
-          Job.new(database: database, id: id, run_at: run_at)
+      def recent_jobs(databases)
+        jobs = SafeArray.new
+
+        threads = databases.map do |database|
+          Thread.new(database) do |database|
+            database.with_connection do
+              recent_scope(database).order(:run_at).limit(1).pluck(:id, :run_at).each do |id, run_at|
+                jobs << Job.new(database: database, id: id, run_at: run_at)
+              end
+            end
+          end
         end
+
+        threads.each(&:join)
+        threads.each(&:kill)
+
+        jobs.sort_by(&:run_at)
       end
 
       private

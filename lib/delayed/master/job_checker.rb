@@ -2,6 +2,7 @@
 
 require_relative 'database'
 require_relative 'forker'
+require_relative 'job'
 require_relative 'job_finder'
 require_relative 'sleep'
 
@@ -15,7 +16,7 @@ module Delayed
         @config = master.config
         @databases = master.databases
         @callbacks = master.callbacks
-        @queues = @databases.map { |database| [database, Queue.new] }.to_h
+        @queue = Queue.new
         @threads = SafeArray.new
         @timer_threads = SafeArray.new
         @job_finder = JobFinder.new(master)
@@ -23,9 +24,7 @@ module Delayed
 
       def start
         @threads << start_scheduler_thread
-        @threads += @databases.map do |database|
-          start_checker_thread(database)
-        end
+        @threads << start_checker_thread
       end
 
       def start_scheduler_thread
@@ -35,47 +34,41 @@ module Delayed
               stop
               break
             elsif i == 0
-              schedule(@databases)
+              schedule
             end
           end
         end
       end
 
-      def start_checker_thread(database)
-        Thread.new(database) do |database|
+      def start_checker_thread
+        Thread.new do
           loop do
-            if @queues[database].pop == :stop
+            databases = @queue.pop
+            if databases == :stop
               break
             else
-              @callbacks.call(:polling, @master, database) do
-                check(database)
+              @callbacks.call(:polling, @master, databases) do
+                check(databases)
               end
             end
           end
         end
       end
 
-      def start_timer_thread(database, run_at)
-        @timer_threads << Thread.new(database, run_at) do |database, run_at|
+      def start_timer_thread(databases, run_at)
+        @timer_threads << Thread.new(run_at) do |run_at|
           sleep run_at.to_f - Time.zone.now.to_f
-          schedule(database)
+          schedule(databases)
           @timer_threads.delete(Thread.current)
         end
       end
 
-      def stop
-        @databases.each do |database|
-          queue = @queues[database]
-          queue.clear
-          queue.push(:stop)
-        end
+      def schedule(databases = nil)
+        @queue.push(Array(databases).presence || @databases)
       end
 
-      def schedule(databases)
-        Array(databases).each do |database|
-          queue = @queues[database]
-          queue.push(database) if queue.size == 0
-        end
+      def stop
+        @queue.push(:stop)
       end
 
       def wait
@@ -90,27 +83,27 @@ module Delayed
 
       private
 
-      def check(database)
-        @master.logger.debug { "checking jobs @#{database.spec_name}..." }
-        check_jobs(database)
-        check_recent_jobs(database)
+      def check(databases)
+        @master.logger.debug { "checking jobs..." }
+        check_jobs(databases)
+        check_recent_jobs(databases)
       rescue => e
         @master.logger.warn { "#{e.class}: #{e.message}" }
         @master.logger.debug { e.backtrace.join("\n") }
       end
 
-      def check_jobs(database)
-        jobs = find_jobs(database)
+      def check_jobs(databases)
+        jobs = find_jobs(databases)
         jobs.each do |job|
           @master.logger.info { "found jobs @#{job.database.spec_name} for #{job.setting.worker_info}" }
           fork_worker(job.database, job.setting)
         end
       end
 
-      def find_jobs(database)
+      def find_jobs(databases)
         free_settings = count_free_settings
         free_settings.map do |setting, free_count|
-          @job_finder.ready_jobs(database, setting, free_count)
+          @job_finder.ready_jobs(databases, setting, free_count)
         end.flatten
       end
 
@@ -129,8 +122,8 @@ module Delayed
         @master.monitoring.schedule(worker)
       end
 
-      def check_recent_jobs(database)
-        jobs = @job_finder.recent_jobs(database)
+      def check_recent_jobs(databases)
+        jobs = @job_finder.recent_jobs(databases)
         jobs.each do |job|
           @master.logger.info { "set timer to #{job.run_at.iso8601(6)} @#{job.database.spec_name}" }
           start_timer_thread(job.database, job.run_at)
