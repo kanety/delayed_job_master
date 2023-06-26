@@ -54,6 +54,14 @@ add_worker do |worker|
   worker.max_threads 1
 end
 
+# worker4
+add_worker do |worker|
+  worker.queues %w(queue4)
+  worker.max_processes 1
+  worker.max_threads 1
+  worker.max_exec_time 3.seconds
+end
+
 before_fork do |master, worker|
   ActiveRecord::Base.connection.disconnect!
 end
