@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.1.0
+
+* Add timer feature.
+
 ## 3.0.1
 
 * Fix title of forked process.
