@@ -57,7 +57,8 @@ module Delayed
 
       def start_timer_thread(database, run_at)
         @timer_threads << Thread.new(database, run_at) do |database, run_at|
-          sleep run_at.to_f - Time.zone.now.to_f
+          interval = run_at.to_f - Time.zone.now.to_f
+          sleep interval if interval > 0
           schedule(database)
           @timer_threads.delete(Thread.current)
         end
