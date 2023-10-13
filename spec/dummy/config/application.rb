@@ -11,8 +11,9 @@ require 'delayed/master'
 
 module Dummy
   class Application < Rails::Application
+    config.load_defaults Rails::VERSION::STRING.to_f
+
     config.active_job.queue_adapter = :delayed_job
-    config.active_record.legacy_connection_handling = false if Rails.gem_version > Gem::Version.new('6.1')
 
     database = ENV['DATABASE'] ? "database_#{ENV['DATABASE']}" : "database"
     database += "_multi" if ENV['DATABASE_CONFIG'] == 'multi'
