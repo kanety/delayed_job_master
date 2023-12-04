@@ -11,12 +11,12 @@ describe Delayed::Master::Command do
   context 'config' do
     it 'parses long option' do
       config = Delayed::Master::Command.new(%W(--config #{config_file})).config
-      expect(config.workers.size).to eq(3)
+      expect(config.workers.size).to eq(4)
     end
 
     it 'parses short option' do
       config = Delayed::Master::Command.new(%W(-c #{config_file})).config
-      expect(config.workers.size).to eq(3)
+      expect(config.workers.size).to eq(4)
     end
   end
 

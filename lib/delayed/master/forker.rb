@@ -50,7 +50,7 @@ module Delayed
           end
         end
         [:min_priority, :max_priority, :sleep_delay, :read_ahead, :exit_on_complete, :queues,
-         :max_threads, :max_memory].each do |key|
+         :max_threads, :max_memory, :max_execution].each do |key|
           if (value = worker.setting.send(key))
             instance.send("#{key}=", value)
           end

@@ -37,6 +37,14 @@ describe Delayed::Worker do
     end
   end
 
+  it 'checks max execution' do
+    tester.start(max_execution: 1.seconds) do |worker|
+      tester.enqueue_timer_job(queue: 'worker_test', count: 2)
+      tester.wait_worker_stopped
+      expect(Delayed::Job.count).to eq(1)
+    end
+  end
+
   it 'works multithread' do
     tester.start(max_threads: 2) do |worker|
       tester.enqueue_timer_job(queue: 'worker_test', count: 2)
