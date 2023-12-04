@@ -8,6 +8,7 @@ module Delayed
       SIMPLE_CONFIGS   = [:daemon, :working_directory, :log_file, :log_level, :pid_file,
                           :monitor_interval, :polling_interval, :databases]
       CALLBACK_CONFIGS = [:before_fork, :after_fork,
+                          :before_work, :after_work, :around_work,
                           :before_monitor, :after_monitor, :around_monitor,
                           :before_polling, :after_polling, :around_polling]
 

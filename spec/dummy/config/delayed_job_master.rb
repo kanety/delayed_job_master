@@ -66,6 +66,16 @@ after_fork do |master, worker|
   end
 end
 
+before_work do |master, worker|
+end
+
+after_work do |master, worker|
+end
+
+around_work do |master, worker, &block|
+  block.call
+end
+
 before_monitor do |master|
 end
 

@@ -19,7 +19,9 @@ module Delayed
             after_fork_at_child(worker)
             worker.pid = Process.pid
             worker.instance = create_instance(worker)
-            worker.instance.start
+            @callbacks.call(:work, @master, worker) do
+              worker.instance.start
+            end
           end
         end
       end
