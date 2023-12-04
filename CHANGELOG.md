@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.2.0
+
+* Add callback config for `before_work`, `after_work`, and `around_work`.
+* Add config for `max_execution`.
+
 ## 3.1.0
 
 * Add timer feature.

@@ -73,8 +73,11 @@ add_worker do |worker|
   # max thread count for each worker
   worker.max_threads 1
 
-  # max memory in MB
+  # max memory in MB - if a worker exeeds this value, the worker will stop after finishing current jobs
   worker.max_memory 300
+
+  # max execution time in seconds - if a worker exeeds this value, the worker will stop after finishing current jobs
+  worker.max_execution 1.hours
 
   # configs below are same as delayed_job, see https://github.com/collectiveidea/delayed_job
   # worker.sleep_delay 5
@@ -99,6 +102,16 @@ end
 
 after_fork do |master, worker|
   ActiveRecord::Base.establish_connection
+end
+
+before_work do |master, worker|
+end
+
+after_work do |master, worker|
+end
+
+around_work do |master, worker, &block|
+  block.call
 end
 ```
 
