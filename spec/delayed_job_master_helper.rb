@@ -1,6 +1,6 @@
 module DelayedJob
   class << self
-    def [](spec_name)
+    def connect(spec_name)
       spec_name ||= :primary
       model = Class.new(Delayed::Job)
       model_name = spec_name.capitalize
@@ -8,29 +8,30 @@ module DelayedJob
         DelayedJob.const_set(model_name, model)
         DelayedJob.const_get(model_name).establish_connection(spec_name)
       end
-      DelayedJob.const_get(model_name)
+      yield DelayedJob.const_get(model_name)
     end
   end
 end
 
 class BaseTester
-  def enqueue_timer_job(database = nil, **options)
+  def enqueue_timer_job(spec_name = nil, **options)
     options[:priority] ||= 1
-    model = DelayedJob[database]
-    model.transaction do
-      count = options.delete(:count) || 1
-      count.times do
-        TimerJob.set(options).perform_later(2)
+    DelayedJob.connect(spec_name) do |model|
+      model.transaction do
+        count = options.delete(:count) || 1
+        count.times do
+          TimerJob.set(options).perform_later(2)
+        end
       end
     end
   end
 
-  def wait_job_performing(database = nil)
-    wait_job_performing_for(database, 10)
+  def wait_job_performing(spec_name = nil)
+    wait_job_performing_for(spec_name, 10)
   end
 
-  def wait_job_performed(database = nil)
-    wait_job_performed_for(database, 10)
+  def wait_job_performed(spec_name = nil)
+    wait_job_performed_for(spec_name, 10)
   end
 
   def kill(signal)
@@ -39,19 +40,21 @@ class BaseTester
 
   private
 
-  def wait_job_performing_for(database, limit)
+  def wait_job_performing_for(spec_name, limit)
     wait_while(limit) do
       puts "wait job performing..."
-      model = DelayedJob[database]
-      model.where(locked_at: nil).count > 0
+      DelayedJob.connect(spec_name) do |model|
+       model.where(locked_at: nil).count > 0
+      end
     end
   end
 
-  def wait_job_performed_for(database, limit)
+  def wait_job_performed_for(spec_name, limit)
     wait_while(limit) do
       puts "wait job performed..."
-      model = DelayedJob[database]
-      model.where.not(locked_at: nil).count > 0
+      DelayedJob.connect(spec_name) do |model|
+        model.where.not(locked_at: nil).count > 0
+      end
     end
   end
 

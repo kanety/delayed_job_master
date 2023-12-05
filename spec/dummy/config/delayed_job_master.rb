@@ -19,7 +19,7 @@ log_file STDOUT
 log_level :debug
 
 if ENV['DATABASE_CONFIG'] == 'multi'
-  databases [:primary, :secondary]
+  shards [:shard1, :shard2]
 end
 
 # worker1
@@ -63,15 +63,10 @@ add_worker do |worker|
 end
 
 before_fork do |master, worker|
-  ActiveRecord::Base.connection.disconnect!
+  ActiveRecord::Base.connection_handler.clear_active_connections!(:writing)
 end
 
 after_fork do |master, worker|
-  if ENV['DATABASE_CONFIG'] == 'multi'
-    ActiveRecord::Base.establish_connection worker.database.spec_name
-  else
-    ActiveRecord::Base.establish_connection
-  end
 end
 
 before_work do |master, worker|
@@ -81,7 +76,9 @@ after_work do |master, worker|
 end
 
 around_work do |master, worker, &block|
-  block.call
+  ActiveRecord::Base.connected_to(shard: worker.database.shard) do
+    block.call
+  end
 end
 
 before_monitor do |master|

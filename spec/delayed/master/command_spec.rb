@@ -74,10 +74,10 @@ describe Delayed::Master::Command do
     end
   end
 
-  context 'databases' do
+  context 'shards' do
     it 'parses long option' do
-      config = Delayed::Master::Command.new(%w(--databases=db1,db2)).config
-      expect(config.databases).to eq([:db1, :db2])
+      config = Delayed::Master::Command.new(%w(--shards=shard1,shard2)).config
+      expect(config.shards).to eq([:shard1, :shard2])
     end
   end
 end

@@ -18,7 +18,7 @@ module Delayed
 
       def info
         strs = [@setting.worker_info]
-        strs << "@#{@database.spec_name}" if @database
+        strs << "@#{@database.shard}" if @database
         strs.join(' ')
       end
 

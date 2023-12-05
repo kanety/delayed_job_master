@@ -12,14 +12,17 @@ ci: &ci
   username: root
 
 development:
-  <<: *default
-  database: djm_development
+  primary:
+    <<: *default
+    database: djm_development
 
 test:
-  <<: *default
-  <<: *ci
-  database: djm_test
+  primary:
+    <<: *default
+    <<: *ci
+    database: djm_test
 
 production:
-  <<: *default
-  database: djm_production
+  primary:
+    <<: *default
+    database: djm_production

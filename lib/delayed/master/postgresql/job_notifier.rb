@@ -5,7 +5,14 @@ module Delayed
     module Postgresql
       class << self
         def notify(model)
-          model.connection.execute "NOTIFY delayed_job_master"
+          identity = "#{model.connection.shard}.delayed_job_master"
+          model.connection.execute "NOTIFY #{quote(identity)}"
+        end
+
+        private
+
+        def quote(identity)
+          ActiveRecord::Base.connection.quote_column_name(identity)
         end
       end
 

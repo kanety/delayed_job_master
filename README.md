@@ -59,8 +59,8 @@ log_file "#{Dir.pwd}/log/delayed_job_master.log"
 # log level
 log_level :info
 
-# databases for checking new jobs in case multiple databases
-# databases [:primary, :secondary]
+# shards for checking new jobs if you use sharded databases
+# shards [:shard1, :shard2]
 
 # worker1
 add_worker do |worker|

@@ -18,14 +18,6 @@ development:
   secondary:
     <<: *default
     database: djm_development2
-  primary_replica:
-    <<: *default
-    database: djm_development
-    replica: true
-  secondary_replica:
-    <<: *default
-    database: djm_development2
-    replica: true
 
 test:
   primary:
@@ -36,16 +28,6 @@ test:
     <<: *default
     <<: *ci
     database: djm_test2
-  primary_replica:
-    <<: *default
-    <<: *ci
-    database: djm_test
-    replica: true
-  secondary_replica:
-    <<: *default
-    <<: *ci
-    database: djm_test2
-    replica: true
 
 production:
   primary:
@@ -54,11 +36,3 @@ production:
   secondary:
     <<: *default
     database: djm_production2
-  primary_replica:
-    <<: *default
-    database: djm_production
-    replica: true
-  secondary_replica:
-    <<: *default
-    database: djm_production2
-    replica: true

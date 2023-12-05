@@ -92,7 +92,7 @@ module Delayed
       private
 
       def check(database)
-        @master.logger.debug { "checking jobs @#{database.spec_name}..." }
+        @master.logger.debug { "checking jobs @#{database.shard}..." }
         check_jobs(database)
         check_recent_jobs(database)
       rescue => e
@@ -103,7 +103,7 @@ module Delayed
       def check_jobs(database)
         jobs = find_jobs(database)
         jobs.each do |job|
-          @master.logger.info { "found jobs @#{job.database.spec_name} for #{job.setting.worker_info}" }
+          @master.logger.info { "found jobs @#{job.database.shard} for #{job.setting.worker_info}" }
           fork_worker(job.database, job.setting)
         end
       end
@@ -133,7 +133,7 @@ module Delayed
       def check_recent_jobs(database)
         jobs = @job_finder.recent_jobs(database)
         jobs.each do |job|
-          @master.logger.info { "set timer to #{job.run_at.iso8601(6)} @#{job.database.spec_name}" }
+          @master.logger.info { "set timer to #{job.run_at.iso8601(6)} @#{job.database.shard}" }
           start_timer_thread(job.database, job.run_at)
         end
       end

@@ -6,8 +6,10 @@ describe Delayed::Master do
   end
 
   before do
-    [:primary, :secondary].each do |spec_name|
-      DelayedJob[spec_name].delete_all
+    [:primary, :secondary].each do |shard|
+      DelayedJob.connect(shard) do |model|
+        model.delete_all
+      end
     end
   end
 
@@ -24,8 +26,10 @@ describe Delayed::Master do
         tester.wait_worker_terminated
       end
 
-      [:primary, :secondary].each do |spec_name|
-        expect(DelayedJob[spec_name].count).to eq(0)
+      [:primary, :secondary].each do |shard|
+        DelayedJob.connect(shard) do |model|
+          expect(model.count).to eq(0)
+        end
       end
     end
   end

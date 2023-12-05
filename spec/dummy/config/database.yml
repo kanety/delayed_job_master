@@ -5,13 +5,16 @@ default: &default
   checkout_timeout: 1
 
 development:
-  <<: *default
-  database: djm_development
+  primary:
+    <<: *default
+    database: djm_development
 
 test:
-  <<: *default
-  database: djm_test
+  primary:
+    <<: *default
+    database: djm_test
 
 production:
-  <<: *default
-  database: djm_production
+  primary:
+    <<: *default
+    database: djm_production

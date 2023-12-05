@@ -45,8 +45,8 @@ module Delayed
           opt.on('--polling-interval=INTERVAL', Numeric, 'Polling interval') do |interval|
             @config.polling_interval = interval
           end
-          opt.on('--databases=DB1,DB2', Array, 'Database spec name to check delayed_jobs table') do |databases|
-            @config.databases = databases.map(&:to_sym)
+          opt.on('--shards=shard1,shard2', Array, 'Shard name to check delayed_jobs table') do |shards|
+            @config.shards = shards.map(&:to_sym)
           end
         }.parse(args)
       end

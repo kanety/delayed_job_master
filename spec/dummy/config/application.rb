@@ -18,6 +18,15 @@ module Dummy
     database = ENV['DATABASE'] ? "database_#{ENV['DATABASE']}" : "database"
     database += "_multi" if ENV['DATABASE_CONFIG'] == 'multi'
     config.paths["config/database"] = "config/#{database}.yml"
+
+    config.after_initialize do
+      if ENV['DATABASE_CONFIG'] == 'multi'
+        ActiveRecord::Base.connects_to(shards: {
+          shard1: { writing: :primary, reading: :primary },
+          shard2: { writing: :secondary, reading: :secondary }
+        })
+      end
+    end
   end
 end
 

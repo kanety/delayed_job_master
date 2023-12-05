@@ -6,8 +6,8 @@ module Delayed
   module Master
     class Config
       SIMPLE_CONFIGS   = [:daemon, :working_directory, :log_file, :log_level, :pid_file,
-                          :monitor_interval, :polling_interval, :databases]
-      CALLBACK_CONFIGS = [:before_fork, :after_fork,
+                          :monitor_interval, :polling_interval, :shards]
+      CALLBACK_CONFIGS = [:before_fork, :after_fork, :around_fork,
                           :before_work, :after_work, :around_work,
                           :before_monitor, :after_monitor, :around_monitor,
                           :before_polling, :after_polling, :around_polling]
@@ -24,7 +24,7 @@ module Delayed
         @log_level = :info
         @monitor_interval = 5
         @polling_interval = 30
-        @databases = []
+        @shards = []
         CALLBACK_CONFIGS.each do |name|
           send("#{name}=", [])
         end
@@ -76,7 +76,7 @@ module Delayed
 
       def abstract_texts
         texts = []
-        texts << "databases: #{@databases.join(', ')}" if @databases.present?
+        texts << "shards: #{@shards.join(', ')}" if @shards.present?
         texts += @workers.map do |worker|
           str = "worker[#{worker.id}]: #{worker.max_processes} processes, #{worker.max_threads} threads"
           str += " (#{worker.queues.join(', ')})" if worker.queues.present?

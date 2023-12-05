@@ -1,19 +1,22 @@
 describe Delayed::Master::Database do
   it 'gets model with specific database connection' do
-    model = Delayed::Master::Database.new(:primary).model
-    expect(model.name).to eq('Delayed::Master::DelayedJobPrimary')
+    Delayed::Master::Database.new(:default).connect do |model|
+      expect(model.current_shard).to eq(:default)
+    end
     if ENV['DATABASE_CONFIG'] == 'multi'
-      model = Delayed::Master::Database.new(:secondary).model
-      expect(model.name).to eq('Delayed::Master::DelayedJobSecondary')
+      Delayed::Master::Database.new(:shard1).connect do |model|
+        expect(model.current_shard).to eq(:shard1)
+      end
     end
   end
 
-  it 'detects databases with delayed_jobs table' do
+  it 'detects shards with delayed_jobs table' do
     databases = Delayed::Master::Database.all
     if ENV['DATABASE_CONFIG'] == 'multi'
-      expect(databases.map(&:spec_name)).to eq([:primary, :secondary])
+      expect(databases.map(&:shard)).to include(:shard1)
+      expect(databases.map(&:shard)).to include(:shard2)
     else
-      expect(databases.map(&:spec_name)).to eq([:primary])
+      expect(databases.map(&:shard)).to include(:default)
     end
   end
 end

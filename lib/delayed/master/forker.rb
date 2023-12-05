@@ -13,9 +13,7 @@ module Delayed
 
       def call(worker)
         around_fork(worker) do
-          @callbacks.run(:before_fork, @master, worker)
           worker.pid = fork do
-            @callbacks.run(:after_fork, @master, worker)
             after_fork_at_child(worker)
             worker.pid = Process.pid
             worker.instance = create_instance(worker)
@@ -30,7 +28,9 @@ module Delayed
 
       def around_fork(worker)
         @master.logger.info { "forking #{worker.name}..." }
-        yield
+        @callbacks.call(:fork, @master, worker) do
+          yield
+        end
         @master.logger.info { "forked #{worker.name} with pid #{worker.pid}" }
       end
 

@@ -12,21 +12,24 @@ module Delayed
       end
 
       def ready_jobs(database, setting, limit)
-        ready_scope(database, setting).limit(limit).pluck(:id, :run_at).map do |id, run_at|
-          Job.new(database: database, setting: setting, id: id, run_at: run_at)
+        database.connect do |model|
+          ready_scope(model, setting).limit(limit).pluck(:id, :run_at).map do |id, run_at|
+            Job.new(database: database, setting: setting, id: id, run_at: run_at)
+          end
         end
       end
 
       def recent_jobs(database)
-        recent_scope(database).order(:run_at).limit(1).pluck(:id, :run_at).map do |id, run_at|
-          Job.new(database: database, id: id, run_at: run_at)
+        database.connect do |model|
+          recent_scope(model).order(:run_at).limit(1).pluck(:id, :run_at).map do |id, run_at|
+            Job.new(database: database, id: id, run_at: run_at)
+          end
         end
       end
 
       private
 
-      def ready_scope(database, setting)
-        model = database.model
+      def ready_scope(model, setting)
         model.where("(run_at <= ? AND (locked_at IS NULL OR locked_at < ?)) AND failed_at IS NULL",
           model.db_time_now,
           model.db_time_now - (setting.max_run_time || Delayed::Worker::DEFAULT_MAX_RUN_TIME)
@@ -37,8 +40,7 @@ module Delayed
         end
       end
 
-      def recent_scope(database)
-        model = database.model
+      def recent_scope(model)
         model.where("run_at > ? AND run_at < ? AND locked_at IS NULL AND failed_at IS NULL",
           model.db_time_now,
           model.db_time_now + @config.polling_interval,

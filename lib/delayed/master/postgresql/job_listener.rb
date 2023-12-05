@@ -36,7 +36,7 @@ module Delayed
         private
 
         def listen(database)
-          database.with_connection do |connection|
+          database.checkout_connection do |connection|
             listen_connection(database, connection) do
               loop do
                 if @master.stop?
@@ -50,22 +50,27 @@ module Delayed
         end
 
         def listen_connection(database, connection)
-          @master.logger.info { "listening @#{database.spec_name}..." }
-          connection.execute("LISTEN delayed_job_master")
+          @master.logger.info { "listening @#{database.shard}..." }
+          identity = "#{connection.shard}.delayed_job_master"
+          connection.execute("LISTEN #{quote(identity)}")
           yield
         rescue => e
           @master.logger.warn { "#{e.class}: #{e.message}" }
           @master.logger.debug { e.backtrace.join("\n") }
         ensure
-          @master.logger.info { "unlisten @#{database.spec_name}" }
-          connection.execute("UNLISTEN delayed_job_master")
+          @master.logger.info { "unlisten @#{database.shard}" }
+          connection.execute("UNLISTEN #{quote(identity)}")
         end
 
         def wait_for_notify(database, connection)
           connection.raw_connection.wait_for_notify(1) do |_event, _pid, _payload|
-            @master.logger.info { "received notification @#{database.spec_name}" }
+            @master.logger.info { "received notification @#{database.shard}" }
             @master.job_checker.schedule(database)
           end
+        end
+
+        def quote(identity)
+          ActiveRecord::Base.connection.quote_column_name(identity)
         end
       end
     end

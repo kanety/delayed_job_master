@@ -24,7 +24,7 @@ module Delayed
         @logger = setup_logger(@config.log_file, @config.log_level)
         @workers = SafeArray.new
 
-        @databases = Database.all(@config.databases)
+        @databases = Database.all(@config.shards)
         @callbacks = Callbacks.new(@config)
         @monitoring = Monitoring.new(self)
         @job_checker = JobChecker.new(self)
