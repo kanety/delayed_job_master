@@ -6,4 +6,5 @@
 /spec/reports/
 /spec/**/log/*.log
 /spec/**/tmp/*
+/tmp/
 /vendor/

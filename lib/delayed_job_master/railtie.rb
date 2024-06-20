@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module DelayedJobMaster
   class Railtie < Rails::Railtie
     config.after_initialize do
