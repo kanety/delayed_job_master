@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.1.1
+
+* Add `frozen_string_literal: true`.
+
 ## 3.1.0
 
 * Add timer feature.
