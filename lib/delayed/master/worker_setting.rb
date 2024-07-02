@@ -56,14 +56,14 @@ module Delayed
       end
 
       def control(value = nil)
-        ActiveSupport::Deprecation.warn <<-TEXT.squish
-          deprecated 'control' setting was used. Remove it from your config file.
+        warn <<-TEXT.squish
+          DEPRECATION WARNING: 'control' setting was deprecated. Remove it from your config file. (#{caller[0]})
         TEXT
       end
 
       def count(value = nil)
-        ActiveSupport::Deprecation.warn <<-TEXT.squish
-          deprecated 'count' setting was used. Use 'max_processes' instead.
+        warn <<-TEXT.squish
+          DEPRECATION WARNING: 'count' setting was deprecated. Use 'max_processes' instead. (#{caller[0]})
         TEXT
         max_processes value
       end
