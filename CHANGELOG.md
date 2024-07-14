@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.1.2
+
+* Fix deprecation warnings to work without activesupport.
+
 ## 3.1.1
 
 * Add `frozen_string_literal: true`.
