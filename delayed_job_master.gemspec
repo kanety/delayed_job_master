@@ -24,12 +24,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "get_process_mem"
   spec.add_dependency "activesupport", ">= 6.0"
 
-  spec.add_development_dependency "rails", ">= 6.0"
   spec.add_development_dependency "rake"
   spec.add_development_dependency "rspec-rails"
   spec.add_development_dependency "simplecov"
-  spec.add_development_dependency "pg"
-  spec.add_development_dependency "mysql2"
-  spec.add_development_dependency "delayed_job_active_record", ">= 4.1"
-  spec.add_development_dependency "delayed_job_bulk", ">= 1.0.0"
 end

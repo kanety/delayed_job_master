@@ -1,7 +1,12 @@
 source 'https://rubygems.org'
 
-gem "delayed_job_active_record", "~> 4.1.0"
 gem "rails", "~> 6.0.0"
+gem "pg"
+gem "mysql2"
+
+gem "delayed_job_active_record", "~> 4.1.0"
+gem "delayed_job_bulk"
+
 gem "psych", "~> 3.3.0"
 
 gemspec path: "../"
