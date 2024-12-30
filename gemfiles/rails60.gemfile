@@ -9,4 +9,11 @@ gem "delayed_job_bulk"
 
 gem "psych", "~> 3.3.0"
 
+if RUBY_VERSION >= "3.4"
+  gem "base64"
+  gem "bigdecimal"
+  gem "drb"
+  gem "mutex_m"
+end
+
 gemspec path: "../"
