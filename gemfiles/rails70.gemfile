@@ -7,4 +7,11 @@ gem "mysql2"
 gem "delayed_job_active_record"
 gem "delayed_job_bulk"
 
+if RUBY_VERSION >= "3.4"
+  gem "base64"
+  gem "bigdecimal"
+  gem "drb"
+  gem "mutex_m"
+end
+
 gemspec path: "../"
