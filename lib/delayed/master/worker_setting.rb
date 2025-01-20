@@ -3,7 +3,7 @@
 module Delayed
   module Master
     class WorkerSetting
-      SIMPLE_CONFIGS = [:id, :max_processes, :max_threads, :max_memory,
+      SIMPLE_CONFIGS = [:id, :max_processes, :max_threads, :max_memory, :exit_on_timeout,
                         :min_priority, :max_priority, :sleep_delay, :read_ahead, :exit_on_complete,
                         :max_attempts, :max_run_time, :destroy_failed_jobs]
       ARRAY_CONFIGS  = [:queues]

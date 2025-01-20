@@ -30,6 +30,9 @@ add_worker do |worker|
   # max memory in MB
   worker.max_memory 300
 
+  # exit on timeout error
+  worker.exit_on_timeout true
+
   # configs below are same as delayed_job, see https://github.com/collectiveidea/delayed_job
   # worker.sleep_delay 5
   # worker.read_ahead 5

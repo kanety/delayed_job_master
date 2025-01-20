@@ -57,6 +57,12 @@ module Delayed
         def run_one_job(job)
           self.class.lifecycle.run_callbacks(:perform, self, job) { run(job) }
         end
+
+        def run(job)
+          super.tap do |result|
+            stop if result == false && exit_on_timeout && job.error.is_a?(Timeout::Error)
+          end
+        end
       end
     end
   end

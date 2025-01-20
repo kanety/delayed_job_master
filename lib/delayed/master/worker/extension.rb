@@ -9,6 +9,6 @@ require_relative 'backend/active_record' if defined?(Delayed::Backend::ActiveRec
 module Delayed
   class Worker
     attr_accessor :master_logger
-    attr_accessor :max_threads, :max_memory
+    attr_accessor :max_threads, :max_memory, :exit_on_timeout
   end
 end
