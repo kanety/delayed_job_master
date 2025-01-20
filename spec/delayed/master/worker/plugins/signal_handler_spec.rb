@@ -1,4 +1,4 @@
-describe Delayed::Worker do
+describe 'Delayed::Master::Worker::Plugins::SignalHandler' do
   let(:tester) do
     WorkerTester.new
   end
@@ -26,23 +26,6 @@ describe Delayed::Worker do
       tester.kill(:USR2)
       tester.wait_job_performed
       expect(worker.stop?).to eq(true)
-    end
-  end
-
-  it 'checks memory usage' do
-    tester.start(max_memory: 1) do |worker|
-      tester.enqueue_timer_job(queue: 'worker_test', count: 2)
-      tester.wait_worker_stopped
-      expect(Delayed::Job.count).to eq(1)
-    end
-  end
-
-  it 'works multithread' do
-    tester.start(max_threads: 2) do |worker|
-      tester.enqueue_timer_job(queue: 'worker_test', count: 2)
-      tester.wait_job_performing
-      tester.wait_job_performed
-      expect(Delayed::Job.count).to eq(0)
     end
   end
 end
