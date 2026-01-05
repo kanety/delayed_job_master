@@ -13,9 +13,9 @@ A simple delayed_job master process to control multiple workers.
 
 ## Dependencies
 
-* ruby 2.7+
-* activesupport 6.0+
-* delayed_job 4.1
+* ruby 3.0+
+* activesupport 7.0+
+* delayed_job 4.1+
 * delayed_job_active_record 4.1 (execlude sqlite)
 
 ## Installation
