@@ -16,4 +16,8 @@ if RUBY_VERSION >= "3.4"
   gem "mutex_m"
 end
 
+if RUBY_VERSION >= "4.0"
+  gem "tsort"
+end
+
 gemspec path: "../"
