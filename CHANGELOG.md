@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.2.0
+
+* Drop support for ruby <= 2.7, rails <= 6.1.
+
 ## 3.1.2
 
 * Fix deprecation warnings to work without activesupport.
